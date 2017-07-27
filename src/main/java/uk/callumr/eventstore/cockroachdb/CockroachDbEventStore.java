@@ -21,6 +21,10 @@ public class CockroachDbEventStore implements EventStore {
         DBI dbi = new DBI("jdbc:postgresql://localhost:26257/hi", "root", "root");
         dbi.registerMapper(new EventMapper());
         this.cockroachEvents = dbi.onDemand(CockroachEvents.class);
+    }
+
+    @Override
+    public void clear() {
         try {
             this.cockroachEvents.deleteAll();
         } catch (UnableToExecuteStatementException e) {

@@ -8,4 +8,6 @@ public interface EventStore {
     void addEvent(String entityId, String eventData);
 
     List<Event> eventsFor(String entityId);
+
+    void clear();
 }
