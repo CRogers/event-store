@@ -5,5 +5,7 @@ import uk.callumr.eventstore.core.Event;
 import java.util.List;
 
 public interface EventStore {
-    List<Event> allEvents();
+    void addEvent(String entityId, String eventData);
+
+    List<Event> eventsFor(String entityId);
 }

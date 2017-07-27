@@ -2,6 +2,7 @@ package uk.callumr.eventstore.cockroachdb;
 
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.StatementContext;
+import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
@@ -14,21 +15,46 @@ import java.sql.SQLException;
 import java.util.List;
 
 public class CockroachDbEventStore implements EventStore {
-    @Override
-    public List<Event> allEvents() {
+    private final CockroachEvents cockroachEvents;
+
+    public CockroachDbEventStore() {
         DBI dbi = new DBI("jdbc:postgresql://localhost:26257/hi", "root", "root");
         dbi.registerMapper(new EventMapper());
-        CoachroachEvents coachroachEvents = dbi.onDemand(CoachroachEvents.class);
-        coachroachEvents.insertIt("entity", "blagh");
-        return coachroachEvents.allEvents();
+        this.cockroachEvents = dbi.onDemand(CockroachEvents.class);
+        try {
+            this.cockroachEvents.deleteAll();
+        } catch (UnableToExecuteStatementException e) {
+            // ignore
+        }
+        this.cockroachEvents.createDatabase();
+        this.cockroachEvents.createEventsTable();
     }
 
-    public interface CoachroachEvents {
+    @Override
+    public void addEvent(String entityId, String eventData) {
+        cockroachEvents.insertIt(entityId, eventData);
+    }
+
+    @Override
+    public List<Event> eventsFor(String entityId) {
+        return cockroachEvents.allEvents(entityId);
+    }
+
+    public interface CockroachEvents {
         @SqlUpdate("insert into hi.events (entityId, data) values (:entityId, :data)")
         void insertIt(@Bind("entityId") String entityId, @Bind("data") String data);
 
-        @SqlQuery("select * from hi.events")
-        List<Event> allEvents();
+        @SqlQuery("select * from hi.events where entityId = :entityId")
+        List<Event> allEvents(@Bind("entityId") String entityId);
+
+        @SqlUpdate("drop database hi")
+        void deleteAll();
+
+        @SqlUpdate("create database hi")
+        void createDatabase();
+
+        @SqlUpdate("create table hi.events (version serial primary key, entityId string, data string)")
+        void createEventsTable();
     }
 
     public class EventMapper implements ResultSetMapper<Event> {

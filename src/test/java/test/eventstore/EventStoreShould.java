@@ -5,11 +5,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import uk.callumr.eventstore.cockroachdb.CockroachDbEventStore;
 import uk.callumr.eventstore.EventStore;
 import uk.callumr.eventstore.InMemoryEventStore;
+import uk.callumr.eventstore.cockroachdb.CockroachDbEventStore;
+import uk.callumr.eventstore.core.Event;
 
 import java.util.Collection;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,12 +32,15 @@ public class EventStoreShould {
     }
 
     @Test
-    public void have_no_events_initially() {
-        assertThat(eventStore.allEvents()).isEmpty();
-    }
+    public void return_an_event_given_one_was_inserted_for_a_given_entity_id() {
+        String entityId = "entity";
+        String eventData = "eventData";
+        eventStore.addEvent(entityId, eventData);
+        List<Event> events = eventStore.eventsFor(entityId);
 
-    @Test
-    public void return_an_event_given_one_was_inserted() {
-
+        assertThat(events).hasSize(1);
+        Event event = events.get(0);
+        assertThat(event.entityId()).isEqualTo(entityId);
+        assertThat(event.eventData()).isEqualTo(eventData);
     }
 }
