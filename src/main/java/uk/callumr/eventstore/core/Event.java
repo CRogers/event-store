@@ -5,8 +5,8 @@ import org.immutables.value.Value;
 @Value.Immutable
 public interface Event {
     long version();
-    String entityId();
     String eventData();
+    EntityId entityId();
 
     static ImmutableEvent.Builder builder() {
         return ImmutableEvent.builder();

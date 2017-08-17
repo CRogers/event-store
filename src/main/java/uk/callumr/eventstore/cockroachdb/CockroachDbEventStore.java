@@ -8,6 +8,7 @@ import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
 import uk.callumr.eventstore.EventStore;
+import uk.callumr.eventstore.core.EntityId;
 import uk.callumr.eventstore.core.Event;
 
 import java.sql.ResultSet;
@@ -35,13 +36,13 @@ public class CockroachDbEventStore implements EventStore {
     }
 
     @Override
-    public void addEvent(String entityId, String eventData) {
-        cockroachEvents.insertIt(entityId, eventData);
+    public void addEvent(EntityId entityId, String eventData) {
+        cockroachEvents.insertIt(entityId.asString(), eventData);
     }
 
     @Override
-    public List<Event> eventsFor(String entityId) {
-        return cockroachEvents.allEvents(entityId);
+    public List<Event> eventsFor(EntityId entityId) {
+        return cockroachEvents.allEvents(entityId.asString());
     }
 
     public interface CockroachEvents {
@@ -70,7 +71,7 @@ public class CockroachDbEventStore implements EventStore {
 
             return Event.builder()
                     .version(version)
-                    .entityId(entityId)
+                    .entityId(EntityId.of(entityId))
                     .eventData(eventData)
                     .build();
         }

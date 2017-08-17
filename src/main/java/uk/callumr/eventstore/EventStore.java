@@ -1,13 +1,14 @@
 package uk.callumr.eventstore;
 
+import uk.callumr.eventstore.core.EntityId;
 import uk.callumr.eventstore.core.Event;
 
 import java.util.List;
 
 public interface EventStore {
-    void addEvent(String entityId, String eventData);
+    void addEvent(EntityId entityId, String eventData);
 
-    List<Event> eventsFor(String entityId);
+    List<Event> eventsFor(EntityId entityId);
 
     void clear();
 }
