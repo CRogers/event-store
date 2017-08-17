@@ -1,35 +1,23 @@
 package test.eventstore;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 import uk.callumr.eventstore.EventStore;
-import uk.callumr.eventstore.InMemoryEventStore;
-import uk.callumr.eventstore.cockroachdb.CockroachDbEventStore;
 import uk.callumr.eventstore.core.Event;
 
-import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(Parameterized.class)
 public class EventStoreShould {
+    private static final String JAMES = "james";
+    private static final String EVENT_DATA = "eventData";
+    private static final String OTHER_EVENT_DATA = "other eventData";
+
     private final EventStore eventStore;
 
-    public EventStoreShould(String name, EventStore eventStore) {
+    public EventStoreShould(EventStore eventStore) {
         this.eventStore = eventStore;
-    }
-
-    @Parameters(name = "{0}")
-    public static Collection<Object[]> parameters() {
-        return ImmutableList.of(
-                new Object[] { "In Memory", new InMemoryEventStore() },
-                new Object[] { "Cockroachdb", new CockroachDbEventStore() }
-        );
     }
 
     @Before
@@ -40,22 +28,31 @@ public class EventStoreShould {
     @Test
     public void return_an_event_given_one_was_inserted_for_a_given_entity_id() {
         String entityId = "entity";
-        String eventData = "eventData";
 
-        eventStore.addEvent(entityId, eventData);
+        eventStore.addEvent(entityId, EVENT_DATA);
         List<Event> events = eventStore.eventsFor(entityId);
 
-        assertSingleEventWithIdData(events, entityId, eventData);
+        assertSingleEventWithIdData(events, entityId, EVENT_DATA);
     }
 
     @Test
     public void return_only_one_event_even_though_another_was_inserted_for_another_entity_id() {
-        eventStore.addEvent("james", "data");
+        eventStore.addEvent(JAMES, EVENT_DATA);
         eventStore.addEvent("alex", "other data");
 
-        List<Event> events = eventStore.eventsFor("james");
+        List<Event> events = eventStore.eventsFor(JAMES);
 
-        assertSingleEventWithIdData(events, "james", "data");
+        assertSingleEventWithIdData(events, JAMES, EVENT_DATA);
+    }
+
+    @Test
+    public void return_two_events_in_insertion_order_when_inserted_for_the_same_entity() {
+        eventStore.addEvent(JAMES, EVENT_DATA);
+        eventStore.addEvent(JAMES, OTHER_EVENT_DATA);
+
+        List<Event> events = eventStore.eventsFor(JAMES);
+
+
     }
 
     private void assertSingleEventWithIdData(List<Event> events, String entityId, String eventData) {
@@ -64,4 +61,5 @@ public class EventStoreShould {
         assertThat(event.entityId()).isEqualTo(entityId);
         assertThat(event.eventData()).isEqualTo(eventData);
     }
+
 }
