@@ -62,7 +62,6 @@ public class EventStoreShould {
                 matchingEvent(JAMES, EVENT_DATA),
                 matchingEvent(JAMES, OTHER_EVENT_DATA)
         ));
-
     }
 
 }
