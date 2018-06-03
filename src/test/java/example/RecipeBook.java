@@ -6,14 +6,10 @@ import uk.callumr.eventstore.core.EntityId;
 @Value.Immutable
 public abstract class RecipeBook {
     protected abstract EntityId id();
-
-    public Recipe addRecipe(String recipeName) {
-        return Recipe.builder()
-                .id(EntityId.of(recipeName))
-                .build();
-    }
+    public abstract String name();
 
     public static ImmutableRecipeBook.Builder builder() {
         return ImmutableRecipeBook.builder();
     }
+
 }

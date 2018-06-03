@@ -1,8 +1,6 @@
 package example.test;
 
-import example.Meal;
 import example.MealMachine;
-import example.Recipe;
 import example.RecipeBook;
 import org.junit.Test;
 import uk.callumr.eventstore.InMemoryEventStore;
@@ -13,11 +11,11 @@ public class MealMachineShould {
     private final MealMachine mealMachine = new MealMachine(new InMemoryEventStore());
 
     @Test
-    public void allow_a_recipe_book_and_recipe_to_be_added_and_used() {
-        RecipeBook recipeBook = mealMachine.addRecipeBook("ye olde recipe book");
-        Recipe recipe = recipeBook.addRecipe("tasty pancakes");
-        Meal meal = recipe.cook();
+    public void allow_a_recipe_book_to_be_added_and_retrieved() {
+        String recipeBookName = "ye olde recipe book";
+        RecipeBook recipeBook = mealMachine.addRecipeBook(recipeBookName);
 
-        assertThat(recipe.allMeals()).containsExactly(meal);
+        assertThat(recipeBook.name()).isEqualTo(recipeBookName);
+        assertThat(mealMachine.allRecipeBooks()).containsExactly(recipeBook);
     }
 }
