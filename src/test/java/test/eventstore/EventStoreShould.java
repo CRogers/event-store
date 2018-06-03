@@ -12,7 +12,7 @@ import static matchers.EventMatcher.matchingEvent;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 
-public class EventStoreShould {
+public abstract class EventStoreShould {
     private static final EntityId JAMES = EntityId.of("james");
     private static final EntityId ALEX = EntityId.of("alex");
     private static final String EVENT_DATA = "eventData";
