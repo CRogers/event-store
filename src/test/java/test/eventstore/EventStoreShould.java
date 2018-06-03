@@ -18,6 +18,7 @@ public abstract class EventStoreShould {
     private static final EntityId JAMES = EntityId.of("james");
     private static final EntityId ALEX = EntityId.of("alex");
     private static final EventType EVENT_TYPE = EventType.of("eventType");
+    private static final EventType OTHER_EVENT_TYPE = EventType.of("otherEventType");
     private static final NewEvent EVENT_DATA = EVENT_TYPE.newEvent("eventData");
     private static final NewEvent OTHER_EVENT_DATA = EVENT_TYPE.newEvent("other eventData");
 
@@ -64,6 +65,18 @@ public abstract class EventStoreShould {
         assertThat(events, contains(
                 matchingEvent(JAMES, EVENT_DATA),
                 matchingEvent(JAMES, OTHER_EVENT_DATA)
+        ));
+    }
+
+    @Test
+    public void return_events_of_a_specific_type() {
+        eventStore.addEvent(JAMES, EVENT_DATA);
+        eventStore.addEvent(ALEX, OTHER_EVENT_TYPE.newEvent("hi"));
+
+        List<Event> events = eventStore.eventsOfType(EVENT_TYPE);
+
+        assertThat(events, contains(
+                matchingEvent(JAMES, EVENT_DATA)
         ));
     }
 

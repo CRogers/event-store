@@ -2,6 +2,7 @@ package uk.callumr.eventstore;
 
 import uk.callumr.eventstore.core.EntityId;
 import uk.callumr.eventstore.core.Event;
+import uk.callumr.eventstore.core.EventType;
 import uk.callumr.eventstore.core.NewEvent;
 
 import java.util.ArrayList;
@@ -38,6 +39,13 @@ public class InMemoryEventStore implements EventStore {
     public List<Event> eventsFor(EntityId entityId) {
         return events.stream()
                 .filter(event -> event.entityId().equals(entityId))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Event> eventsOfType(EventType eventType) {
+        return events.stream()
+                .filter(event -> event.eventType().equals(eventType))
                 .collect(Collectors.toList());
     }
 }

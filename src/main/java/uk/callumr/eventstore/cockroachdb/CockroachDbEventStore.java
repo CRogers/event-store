@@ -47,12 +47,20 @@ public class CockroachDbEventStore implements EventStore {
         return cockroachEvents.allEvents(entityId.asString());
     }
 
+    @Override
+    public List<Event> eventsOfType(EventType eventType) {
+        return cockroachEvents.allEventsOfType(eventType.asString());
+    }
+
     public interface CockroachEvents {
         @SqlUpdate("insert into hi.events (entityId, eventType, data) values (:entityId, :eventType, :data)")
         void insertIt(@Bind("entityId") String entityId, @Bind("eventType") String eventType, @Bind("data") String data);
 
         @SqlQuery("select * from hi.events where entityId = :entityId")
         List<Event> allEvents(@Bind("entityId") String entityId);
+
+        @SqlQuery("select * from hi.events where eventType = :eventType")
+        List<Event> allEventsOfType(@Bind("eventType") String eventType);
 
         @SqlUpdate("drop database hi")
         void deleteAll();
