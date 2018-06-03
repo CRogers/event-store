@@ -13,7 +13,7 @@ public abstract class EventType {
     }
 
     public NewEvent newEvent(String data) {
-        return NewEvent.builder()
+        return BasicNewEvent.builder()
                 .eventType(this)
                 .data(data)
                 .build();
