@@ -2,6 +2,7 @@ package uk.callumr.eventstore;
 
 import uk.callumr.eventstore.core.EntityId;
 import uk.callumr.eventstore.core.Event;
+import uk.callumr.eventstore.core.NewEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,11 +24,12 @@ public class InMemoryEventStore implements EventStore {
     }
 
     @Override
-    public void addEvent(EntityId entityId, String eventData) {
+    public void addEvent(EntityId entityId, NewEvent newEvent) {
         events.add(Event.builder()
                 .version(version.getAndIncrement())
                 .entityId(entityId)
-                .eventData(eventData)
+                .eventType(newEvent.eventType())
+                .data(newEvent.data())
                 .build()
         );
     }

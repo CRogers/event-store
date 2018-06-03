@@ -4,6 +4,8 @@ import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
 import uk.callumr.eventstore.core.EntityId;
 import uk.callumr.eventstore.core.Event;
+import uk.callumr.eventstore.core.EventType;
+import uk.callumr.eventstore.core.NewEvent;
 
 import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.equalTo;
@@ -24,19 +26,30 @@ public enum EventMatcher {
 
     public static class EventDataMatcher extends FeatureMatcher<Event, String> {
         public EventDataMatcher(Matcher<String> subMatcher) {
-            super(subMatcher, "eventData", "eventData");
+            super(subMatcher, "data", "data");
         }
 
         @Override
         protected String featureValueOf(Event actual) {
-            return actual.eventData();
+            return actual.data();
         }
     }
 
-    public static Matcher<Event> matchingEvent(EntityId entityId, String eventData) {
-        return both(new EventEntityIdMatcher(equalTo(entityId))).and(
-                new EventDataMatcher(equalTo(eventData))
-        );
+    public static class EventTypeMatcher extends FeatureMatcher<Event, EventType> {
+        public EventTypeMatcher(Matcher<EventType> subMatcher) {
+            super(subMatcher, "eventType", "eventType");
+        }
+
+        @Override
+        protected EventType featureValueOf(Event actual) {
+            return actual.eventType();
+        }
+    }
+
+    public static Matcher<Event> matchingEvent(EntityId entityId, NewEvent newEvent) {
+        return both(new EventEntityIdMatcher(equalTo(entityId)))
+                .and(new EventTypeMatcher(equalTo(newEvent.eventType())))
+                .and(new EventDataMatcher(equalTo(newEvent.data())));
     }
 
 }

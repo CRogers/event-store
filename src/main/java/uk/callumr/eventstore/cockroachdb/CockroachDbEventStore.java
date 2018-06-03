@@ -10,6 +10,8 @@ import org.skife.jdbi.v2.tweak.ResultSetMapper;
 import uk.callumr.eventstore.EventStore;
 import uk.callumr.eventstore.core.EntityId;
 import uk.callumr.eventstore.core.Event;
+import uk.callumr.eventstore.core.EventType;
+import uk.callumr.eventstore.core.NewEvent;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -36,8 +38,8 @@ public class CockroachDbEventStore implements EventStore {
     }
 
     @Override
-    public void addEvent(EntityId entityId, String eventData) {
-        cockroachEvents.insertIt(entityId.asString(), eventData);
+    public void addEvent(EntityId entityId, NewEvent newEvent) {
+        cockroachEvents.insertIt(entityId.asString(), newEvent.eventType().asString(), newEvent.data());
     }
 
     @Override
@@ -46,8 +48,8 @@ public class CockroachDbEventStore implements EventStore {
     }
 
     public interface CockroachEvents {
-        @SqlUpdate("insert into hi.events (entityId, data) values (:entityId, :data)")
-        void insertIt(@Bind("entityId") String entityId, @Bind("data") String data);
+        @SqlUpdate("insert into hi.events (entityId, eventType, data) values (:entityId, :eventType, :data)")
+        void insertIt(@Bind("entityId") String entityId, @Bind("eventType") String eventType, @Bind("data") String data);
 
         @SqlQuery("select * from hi.events where entityId = :entityId")
         List<Event> allEvents(@Bind("entityId") String entityId);
@@ -58,7 +60,7 @@ public class CockroachDbEventStore implements EventStore {
         @SqlUpdate("create database hi")
         void createDatabase();
 
-        @SqlUpdate("create table hi.events (version serial primary key, entityId string, data string)")
+        @SqlUpdate("create table hi.events (version serial primary key, entityId string, eventType string, data string)")
         void createEventsTable();
     }
 
@@ -67,12 +69,14 @@ public class CockroachDbEventStore implements EventStore {
         public Event map(int index, ResultSet r, StatementContext ctx) throws SQLException {
             long version = r.getLong("version");
             String entityId = r.getString("entityId");
-            String eventData = r.getString("data");
+            String eventType = r.getString("eventType");
+            String data = r.getString("data");
 
             return Event.builder()
                     .version(version)
                     .entityId(EntityId.of(entityId))
-                    .eventData(eventData)
+                    .eventType(EventType.of(eventType))
+                    .data(data)
                     .build();
         }
     }

@@ -5,6 +5,8 @@ import org.junit.Test;
 import uk.callumr.eventstore.EventStore;
 import uk.callumr.eventstore.core.EntityId;
 import uk.callumr.eventstore.core.Event;
+import uk.callumr.eventstore.core.EventType;
+import uk.callumr.eventstore.core.NewEvent;
 
 import java.util.List;
 
@@ -15,8 +17,9 @@ import static org.hamcrest.Matchers.contains;
 public abstract class EventStoreShould {
     private static final EntityId JAMES = EntityId.of("james");
     private static final EntityId ALEX = EntityId.of("alex");
-    private static final String EVENT_DATA = "eventData";
-    private static final String OTHER_EVENT_DATA = "other eventData";
+    private static final EventType EVENT_TYPE = EventType.of("eventType");
+    private static final NewEvent EVENT_DATA = EVENT_TYPE.newEvent("eventData");
+    private static final NewEvent OTHER_EVENT_DATA = EVENT_TYPE.newEvent("other eventData");
 
     private final EventStore eventStore;
 
