@@ -8,7 +8,8 @@ import java.util.stream.Stream;
 
 @Value.Immutable
 public abstract class Recipe {
-    protected abstract EntityId id();
+    public abstract EntityId id();
+    public abstract String name();
 
     public Meal cook() {
         return Meal.builder()

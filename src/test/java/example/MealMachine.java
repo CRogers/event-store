@@ -21,6 +21,7 @@ public class MealMachine {
         eventStore.addEvent(recipeBookId, RECIPE_BOOK_CREATED.newEvent(recipeBookName));
 
         return RecipeBook.builder()
+                .eventStore(eventStore)
                 .id(recipeBookId)
                 .name(recipeBookName)
                 .build();
@@ -29,6 +30,7 @@ public class MealMachine {
     public Stream<RecipeBook> allRecipeBooks() {
         return eventStore.eventsOfType(RECIPE_BOOK_CREATED).stream()
                 .map(event -> RecipeBook.builder()
+                        .eventStore(eventStore)
                         .name(event.data())
                         .id(event.entityId())
                         .build());
