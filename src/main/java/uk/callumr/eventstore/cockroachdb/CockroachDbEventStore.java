@@ -110,19 +110,6 @@ public class CockroachDbEventStore implements EventStore {
         });
     }
 
-    @Override
-    public List<VersionedEvent> eventsOfType(EventType eventType) {
-        return jooq.transactionResult(configuration -> {
-            return DSL.using(configuration)
-                    .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
-                    .from(EVENTS)
-                    .where(EVENT_TYPE.equal(eventType.asString()))
-                    .stream()
-                    .map(this::toVersionedEvent)
-                    .collect(Collectors.toList());
-        });
-    }
-
     private VersionedEvent toVersionedEvent(Record4<Long, String, String, String> record) {
         return VersionedEvent.builder()
                 .version(record.component1())

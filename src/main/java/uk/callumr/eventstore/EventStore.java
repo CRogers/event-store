@@ -13,7 +13,11 @@ public interface EventStore {
                 .build());
     }
 
-    List<VersionedEvent> eventsOfType(EventType eventType);
+    default List<VersionedEvent> eventsOfType(EventType eventType) {
+        return eventsFor(EventFilters.builder()
+                .ofType(eventType)
+                .build());
+    }
 
     void clear();
 

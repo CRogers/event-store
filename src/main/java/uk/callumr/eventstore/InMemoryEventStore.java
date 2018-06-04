@@ -53,11 +53,4 @@ public class InMemoryEventStore implements EventStore {
     private static <T> Function<T, Predicate<Event>> eventValueEqualTo(Function<Event, T> extractor) {
         return value -> event -> value.equals(extractor.apply(event));
     }
-
-    @Override
-    public List<VersionedEvent> eventsOfType(EventType eventType) {
-        return events.stream()
-                .filter(event -> event.eventType().equals(eventType))
-                .collect(Collectors.toList());
-    }
 }
