@@ -28,4 +28,12 @@ public abstract class EventFilters {
     public static Builder builder() {
         return new Builder();
     }
+
+    public static EventFilters forEntity(EntityId entityId) {
+        return builder().forEntity(entityId).build();
+    }
+
+    public static EventFilters ofType(EventType eventType) {
+        return builder().ofType(eventType).build();
+    }
 }

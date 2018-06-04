@@ -8,15 +8,11 @@ public interface EventStore {
     void addEvent(Event event);
 
     default List<VersionedEvent> eventsFor(EntityId entityId) {
-        return eventsFor(EventFilters.builder()
-                .forEntity(entityId)
-                .build());
+        return eventsFor(EventFilters.forEntity(entityId));
     }
 
     default List<VersionedEvent> eventsOfType(EventType eventType) {
-        return eventsFor(EventFilters.builder()
-                .ofType(eventType)
-                .build());
+        return eventsFor(EventFilters.ofType(eventType));
     }
 
     void clear();
