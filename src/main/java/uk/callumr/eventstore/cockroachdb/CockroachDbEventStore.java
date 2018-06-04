@@ -67,12 +67,16 @@ public class CockroachDbEventStore implements EventStore {
     @Override
     public void clear() {
         try {
-            this.cockroachEvents.deleteAll();
+            deleteAll();
         } catch (UnableToExecuteStatementException e) {
             // ignore
         }
         createDatabase();
         createEventsTable();
+    }
+
+    private void deleteAll() {
+        jooq.transaction(configuration -> DSL.using(configuration).query("drop database hi").execute());
     }
 
     private void createDatabase() {
