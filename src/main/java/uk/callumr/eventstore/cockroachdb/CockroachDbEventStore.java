@@ -8,10 +8,7 @@ import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
 import uk.callumr.eventstore.EventStore;
-import uk.callumr.eventstore.core.EntityId;
-import uk.callumr.eventstore.core.VersionedEvent;
-import uk.callumr.eventstore.core.EventType;
-import uk.callumr.eventstore.core.Event;
+import uk.callumr.eventstore.core.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -82,9 +79,11 @@ public class CockroachDbEventStore implements EventStore {
 
             return VersionedEvent.builder()
                     .version(version)
-                    .entityId(EntityId.of(entityId))
-                    .eventType(EventType.of(eventType))
-                    .data(data)
+                    .event(BasicEvent.builder()
+                            .entityId(EntityId.of(entityId))
+                            .eventType(EventType.of(eventType))
+                            .data(data)
+                            .build())
                     .build();
         }
     }
