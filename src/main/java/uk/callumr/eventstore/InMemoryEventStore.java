@@ -37,13 +37,6 @@ public class InMemoryEventStore implements EventStore {
     }
 
     @Override
-    public List<VersionedEvent> eventsFor(EntityId entityId) {
-        return events.stream()
-                .filter(event -> event.entityId().equals(entityId))
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public List<VersionedEvent> eventsFor(EventFilters filters) {
         Predicate<Event> eventPredicate = filters.stream().reduce(
                 event -> false,

@@ -86,19 +86,6 @@ public class CockroachDbEventStore implements EventStore {
     }
 
     @Override
-    public List<VersionedEvent> eventsFor(EntityId entityId) {
-        return jooq.transactionResult(configuration -> {
-            return DSL.using(configuration)
-                    .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
-                    .from(EVENTS)
-                    .where(ENTITY_ID.equal(entityId.asString()))
-                    .stream()
-                    .map(this::toVersionedEvent)
-                    .collect(Collectors.toList());
-            });
-    }
-
-    @Override
     public List<VersionedEvent> eventsFor(EventFilters filters) {
         EventFilter eventFilter = filters.stream()
                 .findFirst()
@@ -109,10 +96,14 @@ public class CockroachDbEventStore implements EventStore {
                 .ofType(eventType -> EVENT_TYPE.equal(eventType.asString()));
 
         return jooq.transactionResult(configuration -> {
-            return DSL.using(configuration)
+            SelectConditionStep<Record4<Long, String, String, String>> query = DSL.using(configuration)
                     .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
                     .from(EVENTS)
-                    .where(condition)
+                    .where(condition);
+
+            System.out.println(query.getSQL());
+
+            return query
                     .stream()
                     .map(this::toVersionedEvent)
                     .collect(Collectors.toList());

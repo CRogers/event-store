@@ -7,7 +7,11 @@ import java.util.List;
 public interface EventStore {
     void addEvent(Event event);
 
-    List<VersionedEvent> eventsFor(EntityId entityId);
+    default List<VersionedEvent> eventsFor(EntityId entityId) {
+        return eventsFor(EventFilters.builder()
+                .forEntity(entityId)
+                .build());
+    }
 
     List<VersionedEvent> eventsOfType(EventType eventType);
 
