@@ -71,8 +71,12 @@ public class CockroachDbEventStore implements EventStore {
         } catch (UnableToExecuteStatementException e) {
             // ignore
         }
-        this.cockroachEvents.createDatabase();
+        createDatabase();
         createEventsTable();
+    }
+
+    private void createDatabase() {
+        jooq.transaction(configuration -> DSL.using(configuration).query("create database hi").execute());
     }
 
     private void createEventsTable() {
