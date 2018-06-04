@@ -11,7 +11,7 @@ import uk.callumr.eventstore.EventStore;
 import uk.callumr.eventstore.core.EntityId;
 import uk.callumr.eventstore.core.VersionedEvent;
 import uk.callumr.eventstore.core.EventType;
-import uk.callumr.eventstore.core.NewEvent;
+import uk.callumr.eventstore.core.Event;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -38,8 +38,8 @@ public class CockroachDbEventStore implements EventStore {
     }
 
     @Override
-    public void addEvent(EntityId entityId, NewEvent newEvent) {
-        cockroachEvents.insertIt(entityId.asString(), newEvent.eventType().asString(), newEvent.data());
+    public void addEvent(EntityId entityId, Event event) {
+        cockroachEvents.insertIt(entityId.asString(), event.eventType().asString(), event.data());
     }
 
     @Override

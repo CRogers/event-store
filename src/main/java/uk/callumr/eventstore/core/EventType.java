@@ -12,8 +12,8 @@ public abstract class EventType {
                 .build();
     }
 
-    public NewEvent newEvent(String data) {
-        return BasicNewEvent.builder()
+    public Event newEvent(String data) {
+        return BasicEvent.builder()
                 .eventType(this)
                 .data(data)
                 .build();

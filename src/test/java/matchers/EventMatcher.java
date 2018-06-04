@@ -5,7 +5,7 @@ import org.hamcrest.Matcher;
 import uk.callumr.eventstore.core.EntityId;
 import uk.callumr.eventstore.core.VersionedEvent;
 import uk.callumr.eventstore.core.EventType;
-import uk.callumr.eventstore.core.NewEvent;
+import uk.callumr.eventstore.core.Event;
 
 import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.equalTo;
@@ -46,10 +46,10 @@ public enum EventMatcher {
         }
     }
 
-    public static Matcher<VersionedEvent> matchingEvent(EntityId entityId, NewEvent newEvent) {
+    public static Matcher<VersionedEvent> matchingEvent(EntityId entityId, Event event) {
         return both(new EventEntityIdMatcher(equalTo(entityId)))
-                .and(new EventTypeMatcher(equalTo(newEvent.eventType())))
-                .and(new EventDataMatcher(equalTo(newEvent.data())));
+                .and(new EventTypeMatcher(equalTo(event.eventType())))
+                .and(new EventDataMatcher(equalTo(event.data())));
     }
 
 }

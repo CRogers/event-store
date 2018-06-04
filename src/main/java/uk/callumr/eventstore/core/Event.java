@@ -1,6 +1,6 @@
 package uk.callumr.eventstore.core;
 
-public interface NewEvent {
+public interface Event {
     EventType eventType();
     String data();
 }
