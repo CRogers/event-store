@@ -80,4 +80,15 @@ public abstract class EventStoreShould {
         ));
     }
 
+//    @Test
+//    public void update_() {
+//        eventStore.projectNewEvents(EventFilters.builder()
+//                .allEventForEntity(JAMES)
+//                .build(), events -> Stream.of())
+//
+//        eventStore.projectNewEvents(ImmutableSet.of(JAMES, ALEX), ImmutableSet.of(EVENT_TYPE, OTHER_EVENT_TYPE), events -> {
+//           return Stream.of()
+//        });
+//    }
+
 }
