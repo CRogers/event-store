@@ -14,6 +14,7 @@ import uk.callumr.eventstore.EventStore;
 import uk.callumr.eventstore.core.*;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -28,6 +29,7 @@ public class CockroachDbEventStore implements EventStore {
 
     private final DBI dbi;
     private final CockroachEvents cockroachEvents;
+    private final DSLContext jooq;
 
     static {
         System.getProperties().setProperty("org.jooq.no-logo", "true");
@@ -37,6 +39,26 @@ public class CockroachDbEventStore implements EventStore {
         this.dbi = new DBI(jdbcUrl, "root", "root");
         this.dbi.registerMapper(new EventMapper());
         this.cockroachEvents = this.dbi.onDemand(CockroachEvents.class);
+
+        this.jooq = DSL.using(new ConnectionProvider() {
+            @Override
+            public Connection acquire() throws DataAccessException {
+                try {
+                    return DriverManager.getConnection(jdbcUrl, "root", "root");
+                } catch (SQLException e) {
+                    throw new DataAccessException("could not open connection", e);
+                }
+            }
+
+            @Override
+            public void release(Connection connection) throws DataAccessException {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    throw new DataAccessException("could not close connection", e);
+                }
+            }
+        }, SQLDialect.POSTGRES);
     }
 
     @Override
@@ -57,24 +79,8 @@ public class CockroachDbEventStore implements EventStore {
 
     @Override
     public List<VersionedEvent> eventsFor(EntityId entityId) {
-        DSLContext jooq = DSL.using(new ConnectionProvider() {
-            @Override
-            public Connection acquire() throws DataAccessException {
-                return dbi.open().getConnection();
-            }
-
-            @Override
-            public void release(Connection connection) throws DataAccessException {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    throw new DataAccessException("could not close connection", e);
-                }
-            }
-        }, SQLDialect.POSTGRES);
-
         return jooq.transactionResult(configuration -> {
-            return DSL.using(dbi.open().getConnection())
+            return DSL.using(configuration)
                     .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
                     .from(EVENTS)
                     .where(ENTITY_ID.equal(entityId.asString()))
