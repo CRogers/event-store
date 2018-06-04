@@ -1,5 +1,8 @@
 package uk.callumr.eventstore.cockroachdb;
 
+import org.jooq.*;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
@@ -10,11 +13,20 @@ import org.skife.jdbi.v2.tweak.ResultSetMapper;
 import uk.callumr.eventstore.EventStore;
 import uk.callumr.eventstore.core.*;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CockroachDbEventStore implements EventStore {
+    private static final Field<Long> VERSION = DSL.field("version", Long.class);
+    private static final Field<String> ENTITY_ID = DSL.field("entityId", String.class);
+    private static final Field<String> EVENT_TYPE = DSL.field("eventType", String.class);
+    private static final Field<String> DATA = DSL.field("data", String.class);
+    private static final Table<Record> EVENTS = DSL.table("events");
+
+    private final DBI dbi;
     private final CockroachEvents cockroachEvents;
 
     static {
@@ -22,9 +34,9 @@ public class CockroachDbEventStore implements EventStore {
     }
 
     public CockroachDbEventStore(String jdbcUrl) {
-        DBI dbi = new DBI(jdbcUrl, "root", "root");
-        dbi.registerMapper(new EventMapper());
-        this.cockroachEvents = dbi.onDemand(CockroachEvents.class);
+        this.dbi = new DBI(jdbcUrl, "root", "root");
+        this.dbi.registerMapper(new EventMapper());
+        this.cockroachEvents = this.dbi.onDemand(CockroachEvents.class);
     }
 
     @Override
@@ -45,7 +57,38 @@ public class CockroachDbEventStore implements EventStore {
 
     @Override
     public List<VersionedEvent> eventsFor(EntityId entityId) {
-        return cockroachEvents.allEvents(entityId.asString());
+        DSLContext jooq = DSL.using(new ConnectionProvider() {
+            @Override
+            public Connection acquire() throws DataAccessException {
+                return dbi.open().getConnection();
+            }
+
+            @Override
+            public void release(Connection connection) throws DataAccessException {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    throw new DataAccessException("could not close connection", e);
+                }
+            }
+        }, SQLDialect.POSTGRES);
+
+        return jooq.transactionResult(configuration -> {
+            return DSL.using(dbi.open().getConnection())
+                    .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
+                    .from(EVENTS)
+                    .where(ENTITY_ID.equal(entityId.asString()))
+                    .stream()
+                    .map(record -> VersionedEvent.builder()
+                            .version(record.component1())
+                            .event(BasicEvent.builder()
+                                    .entityId(EntityId.of(record.component2()))
+                                    .eventType(EventType.of(record.component3()))
+                                    .data(record.component4())
+                                    .build())
+                            .build())
+                    .collect(Collectors.toList());
+            });
     }
 
     @Override
