@@ -1,6 +1,7 @@
 package uk.callumr.eventstore.cockroachdb;
 
 import org.jooq.*;
+import org.jooq.conf.ParamType;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultDataType;
@@ -11,6 +12,7 @@ import uk.callumr.eventstore.core.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -78,32 +80,18 @@ public class CockroachDbEventStore implements EventStore {
 
     @Override
     public void addEvent(Event event) {
-        jooq.transaction(configuration -> DSL.using(configuration)
-                .insertInto(EVENTS)
-                .columns(ENTITY_ID, EVENT_TYPE, DATA)
-                .values(event.entityId().asString(), event.eventType().asString(), event.data())
-                .execute());
+        jooq.transaction(configuration -> insertEvents(DSL.using(configuration), Stream.of(event)));
     }
 
     @Override
     public Stream<VersionedEvent> events(EventFilters filters) {
-        EventFilter eventFilter = filters.stream()
-                .findFirst()
-                .get();
-
-        Condition condition = EventFilter.caseOf(eventFilter)
-                .forEntity(entityId -> ENTITY_ID.equal(entityId.asString()))
-                .ofType(eventType -> EVENT_TYPE.equal(eventType.asString()));
+        Condition condition = eventFiltersToCondition(filters);
 
         return jooq.transactionResult(configuration -> {
-            SelectConditionStep<Record4<Long, String, String, String>> query = DSL.using(configuration)
+            return logSQL(DSL.using(configuration)
                     .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
                     .from(EVENTS)
-                    .where(condition);
-
-            System.out.println(query.getSQL());
-
-            return query
+                    .where(condition))
                     .stream()
                     .map(this::toVersionedEvent);
         });
@@ -111,8 +99,59 @@ public class CockroachDbEventStore implements EventStore {
 
     @Override
     public void reproject(EventFilters filters, Function<Stream<VersionedEvent>, Stream<Event>> projectionFunc) {
-        projectionFunc.apply(events(filters))
-                .forEach(this::addEvent);
+        Condition condition = eventFiltersToCondition(filters);
+
+        jooq.transaction(configuration -> {
+            DSLContext dsl = DSL.using(configuration);
+
+//            DSL.query("SET TRANSACTION SERIALIZABLE")
+//                    .execute();
+
+            Stream<VersionedEvent> events = logSQL(dsl
+                    .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
+                    .from(EVENTS)
+                    .where(condition))
+                    .stream()
+                    .map(this::toVersionedEvent);
+
+            Stream<Event> apply = projectionFunc.apply(events);
+            insertEvents(dsl, apply);
+        });
+    }
+
+    private void insertEvents(DSLContext dsl, Stream<Event> events) {
+        logSQL(events
+                .reduce(
+                        dsl.insertInto(EVENTS).columns(ENTITY_ID, EVENT_TYPE, DATA),
+                        this::insertEvent,
+                        throwErrorOnParallelCombine()))
+                .execute();
+    }
+
+    private <T> BinaryOperator<T> throwErrorOnParallelCombine() {
+        return (a, b) -> {
+            throw new RuntimeException();
+        };
+    }
+
+    private <T extends Query> T logSQL(T query) {
+        System.out.println(query.getSQL(ParamType.INLINED));
+        return query;
+    }
+
+    private InsertValuesStep3<Record, String, String, String> insertEvent(InsertValuesStep3<Record, String, String, String> iv, Event event) {
+        return iv.values(event.entityId().asString(), event.eventType().asString(), event.data());
+    }
+
+    private Condition eventFiltersToCondition(EventFilters filters) {
+        EventFilter eventFilter = filters.stream()
+                .findFirst()
+                .get();
+
+        return EventFilter.caseOf(eventFilter)
+                .forEntity(entityId -> ENTITY_ID.equal(entityId.asString()))
+                .ofType(eventType -> EVENT_TYPE.equal(eventType.asString()))
+                .all(DSL::trueCondition);
     }
 
     private VersionedEvent toVersionedEvent(Record4<Long, String, String, String> record) {

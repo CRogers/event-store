@@ -9,6 +9,7 @@ public abstract class EventFilter {
     public interface Cases<R> {
         R forEntity(EntityId entityId);
         R ofType(EventType eventType);
+        R all();
     }
 
     public abstract <R> R match(Cases<R> cases);

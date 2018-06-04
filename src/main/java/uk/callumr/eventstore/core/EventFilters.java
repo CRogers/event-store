@@ -23,6 +23,11 @@ public abstract class EventFilters {
             addFilters(EventFilterImpls.ofType(eventType));
             return this;
         }
+
+        public Builder all() {
+            addFilters(EventFilterImpls.all());
+            return this;
+        }
     }
 
     public static Builder builder() {
@@ -35,5 +40,9 @@ public abstract class EventFilters {
 
     public static EventFilters ofType(EventType eventType) {
         return builder().ofType(eventType).build();
+    }
+
+    public static EventFilters all() {
+        return builder().all().build();
     }
 }

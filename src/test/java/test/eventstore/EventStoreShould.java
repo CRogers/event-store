@@ -8,9 +8,11 @@ import uk.callumr.eventstore.core.Event;
 import uk.callumr.eventstore.core.EventType;
 import uk.callumr.eventstore.core.VersionedEvent;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static uk.callumr.eventstore.core.EventFilters.all;
 import static uk.callumr.eventstore.core.EventFilters.forEntity;
 import static uk.callumr.eventstore.core.EventFilters.ofType;
 
@@ -85,6 +87,21 @@ public abstract class EventStoreShould {
     }
 
     @Test
+    public void get_events_with_filter_for_all_should_return_all_events() {
+        Event event1 = Event.of(JAMES, EVENT_TYPE, EVENT_DATA);
+        Event event2 = Event.of(JAMES, OTHER_EVENT_TYPE, EVENT_DATA);
+        Event event3 = Event.of(ALEX, EVENT_TYPE, EVENT_DATA);
+
+        eventStore.addEvent(event1);
+        eventStore.addEvent(event2);
+        eventStore.addEvent(event3);
+
+        Stream<VersionedEvent> events = eventStore.events(all());
+
+        assertThatSteamContainsEvents(events, event1, event2, event3);
+    }
+
+    @Test
     public void reprojection_should_return_events_then_persist_new_events() {
         Event event1 = Event.of(JAMES, EVENT_TYPE, EVENT_DATA);
         Event event2 = Event.of(JAMES, EVENT_TYPE, OTHER_EVENT_DATA);
@@ -105,6 +122,29 @@ public abstract class EventStoreShould {
         });
 
         assertThatSteamContainsEvents(eventStore.events(ofType(OTHER_EVENT_TYPE)), event4);
+    }
+
+    @Test
+    public void reprojection_should_take_into_account_new_events_if_added_when_the_projection_is_being_calculated() {
+        Event event1 = Event.of(JAMES, EVENT_TYPE, EVENT_DATA);
+        Event event2 = Event.of(JAMES, OTHER_EVENT_TYPE, EVENT_DATA);
+
+        eventStore.addEvent(event1);
+
+        AtomicBoolean runOnce = new AtomicBoolean(false);
+
+        eventStore.reproject(all(), events -> {
+            if (!runOnce.get()) {
+                eventStore.addEvent(event2);
+                runOnce.set(true);
+            }
+            return Stream.of(Event.of(ALEX, EVENT_TYPE, Long.toString(events.count())));
+        });
+
+        assertThatSteamContainsEvents(eventStore.events(all()),
+                event1,
+                event2,
+                Event.of(ALEX, EVENT_TYPE, "2"));
     }
 
     private static void assertThatSteamContainsEvents(Stream<VersionedEvent> eventStream, Event... expectedEvents) {
