@@ -2,12 +2,12 @@ package uk.callumr.eventstore;
 
 import uk.callumr.eventstore.core.*;
 
-import java.util.List;
+import java.util.stream.Stream;
 
 public interface EventStore {
     void addEvent(Event event);
 
-    List<VersionedEvent> events(EventFilters filters);
+    Stream<VersionedEvent> events(EventFilters filters);
 
     void clear();
 }

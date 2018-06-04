@@ -11,8 +11,7 @@ import uk.callumr.eventstore.core.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CockroachDbEventStore implements EventStore {
     private static final DataType<Long> SERIAL = new DefaultDataType<>(SQLDialect.POSTGRES, Long.class, "serial").nullable(false);
@@ -86,7 +85,7 @@ public class CockroachDbEventStore implements EventStore {
     }
 
     @Override
-    public List<VersionedEvent> events(EventFilters filters) {
+    public Stream<VersionedEvent> events(EventFilters filters) {
         EventFilter eventFilter = filters.stream()
                 .findFirst()
                 .get();
@@ -105,8 +104,7 @@ public class CockroachDbEventStore implements EventStore {
 
             return query
                     .stream()
-                    .map(this::toVersionedEvent)
-                    .collect(Collectors.toList());
+                    .map(this::toVersionedEvent);
         });
     }
 

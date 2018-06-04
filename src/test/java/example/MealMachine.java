@@ -29,7 +29,7 @@ public class MealMachine {
     }
 
     public Stream<RecipeBook> allRecipeBooks() {
-        return eventStore.events(EventFilters.ofType(RECIPE_BOOK_CREATED)).stream()
+        return eventStore.events(EventFilters.ofType(RECIPE_BOOK_CREATED))
                 .map(event -> RecipeBook.builder()
                         .eventStore(eventStore)
                         .name(event.data())

@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class InMemoryEventStore implements EventStore {
     private AtomicLong version;
@@ -37,7 +37,7 @@ public class InMemoryEventStore implements EventStore {
     }
 
     @Override
-    public List<VersionedEvent> events(EventFilters filters) {
+    public Stream<VersionedEvent> events(EventFilters filters) {
         Predicate<Event> eventPredicate = filters.stream().reduce(
                 event -> false,
                 (predicate, eventFilter) -> predicate.or(EventFilter.caseOf(eventFilter)
@@ -46,8 +46,7 @@ public class InMemoryEventStore implements EventStore {
                 Predicate::or);
 
         return events.stream()
-                .filter(versionedEvent -> eventPredicate.test(versionedEvent.event()))
-                .collect(Collectors.toList());
+                .filter(versionedEvent -> eventPredicate.test(versionedEvent.event()));
     }
 
     private static <T> Function<T, Predicate<Event>> eventValueEqualTo(Function<Event, T> extractor) {

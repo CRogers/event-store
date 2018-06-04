@@ -3,13 +3,14 @@ package test.eventstore;
 import org.junit.Before;
 import org.junit.Test;
 import uk.callumr.eventstore.EventStore;
-import uk.callumr.eventstore.core.*;
+import uk.callumr.eventstore.core.EntityId;
+import uk.callumr.eventstore.core.Event;
+import uk.callumr.eventstore.core.EventType;
+import uk.callumr.eventstore.core.VersionedEvent;
 
-import java.util.List;
+import java.util.stream.Stream;
 
-import static matchers.EventMatcher.matchingEvent;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
+import static org.assertj.core.api.Assertions.assertThat;
 import static uk.callumr.eventstore.core.EventFilters.forEntity;
 import static uk.callumr.eventstore.core.EventFilters.ofType;
 
@@ -37,11 +38,9 @@ public abstract class EventStoreShould {
         Event event = EVENT_TYPE.newEvent(JAMES, EVENT_DATA);
         eventStore.addEvent(event);
 
-        List<VersionedEvent> events = eventStore.events(forEntity(JAMES));
+        Stream<VersionedEvent> events = eventStore.events(forEntity(JAMES));
 
-        assertThat(events, contains(
-                matchingEvent(event)
-        ));
+        assertThatSteamContainsEvents(events, event);
     }
 
     @Test
@@ -52,12 +51,11 @@ public abstract class EventStoreShould {
         eventStore.addEvent(jamesEvent1);
         eventStore.addEvent(jamesEvent2);
 
-        List<VersionedEvent> events = eventStore.events(forEntity(JAMES));
+        Stream<VersionedEvent> events = eventStore.events(forEntity(JAMES));
 
-        assertThat(events, contains(
-                matchingEvent(jamesEvent1),
-                matchingEvent(jamesEvent2)
-        ));
+        assertThatSteamContainsEvents(events,
+                jamesEvent1,
+                jamesEvent2);
     }
 
     @Test
@@ -68,11 +66,9 @@ public abstract class EventStoreShould {
         eventStore.addEvent(jamesEvent);
         eventStore.addEvent(alexEvent);
 
-        List<VersionedEvent> events = eventStore.events(forEntity(JAMES));
+        Stream<VersionedEvent> events = eventStore.events(forEntity(JAMES));
 
-        assertThat(events, contains(
-                matchingEvent(jamesEvent)
-        ));
+        assertThatSteamContainsEvents(events, jamesEvent);
     }
 
     @Test
@@ -83,11 +79,15 @@ public abstract class EventStoreShould {
         eventStore.addEvent(someEvent);
         eventStore.addEvent(otherEvent);
 
-        List<VersionedEvent> events = eventStore.events(ofType(EVENT_TYPE));
+        Stream<VersionedEvent> events = eventStore.events(ofType(EVENT_TYPE));
 
-        assertThat(events, contains(
-                matchingEvent(someEvent)
-        ));
+
+
+        assertThatSteamContainsEvents(events, someEvent);
+    }
+
+    private static void assertThatSteamContainsEvents(Stream<VersionedEvent> eventStream, Event... expectedEvents) {
+        assertThat(eventStream.map(VersionedEvent::event)).containsExactly(expectedEvents);
     }
 
 }
