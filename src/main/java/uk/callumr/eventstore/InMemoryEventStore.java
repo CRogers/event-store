@@ -1,7 +1,7 @@
 package uk.callumr.eventstore;
 
 import uk.callumr.eventstore.core.EntityId;
-import uk.callumr.eventstore.core.Event;
+import uk.callumr.eventstore.core.VersionedEvent;
 import uk.callumr.eventstore.core.EventType;
 import uk.callumr.eventstore.core.NewEvent;
 
@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 public class InMemoryEventStore implements EventStore {
     private AtomicLong version;
-    private List<Event> events;
+    private List<VersionedEvent> events;
 
     public InMemoryEventStore() {
         clear();
@@ -26,7 +26,7 @@ public class InMemoryEventStore implements EventStore {
 
     @Override
     public void addEvent(EntityId entityId, NewEvent newEvent) {
-        events.add(Event.builder()
+        events.add(VersionedEvent.builder()
                 .version(version.getAndIncrement())
                 .entityId(entityId)
                 .eventType(newEvent.eventType())
@@ -36,14 +36,14 @@ public class InMemoryEventStore implements EventStore {
     }
 
     @Override
-    public List<Event> eventsFor(EntityId entityId) {
+    public List<VersionedEvent> eventsFor(EntityId entityId) {
         return events.stream()
                 .filter(event -> event.entityId().equals(entityId))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<Event> eventsOfType(EventType eventType) {
+    public List<VersionedEvent> eventsOfType(EventType eventType) {
         return events.stream()
                 .filter(event -> event.eventType().equals(eventType))
                 .collect(Collectors.toList());

@@ -3,7 +3,7 @@ package example;
 import org.immutables.value.Value;
 import uk.callumr.eventstore.EventStore;
 import uk.callumr.eventstore.core.EntityId;
-import uk.callumr.eventstore.core.Event;
+import uk.callumr.eventstore.core.VersionedEvent;
 import uk.callumr.eventstore.core.EventType;
 
 import java.util.stream.Stream;
@@ -39,7 +39,7 @@ public abstract class RecipeBook {
         return eventStore().eventsOfType(RECIPE_ADDED_TO_RECIPE_BOOK).stream()
                 .map(event -> {
                     EntityId recipeId = EntityId.of(event.data());
-                    Event recipeCreatedEvent = eventStore().eventsFor(recipeId).stream()
+                    VersionedEvent recipeCreatedEvent = eventStore().eventsFor(recipeId).stream()
                             .findFirst()
                             .orElseThrow(() -> new RuntimeException("never happen"));
                     return Recipe.builder()

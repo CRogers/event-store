@@ -9,7 +9,7 @@ import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
 import uk.callumr.eventstore.EventStore;
 import uk.callumr.eventstore.core.EntityId;
-import uk.callumr.eventstore.core.Event;
+import uk.callumr.eventstore.core.VersionedEvent;
 import uk.callumr.eventstore.core.EventType;
 import uk.callumr.eventstore.core.NewEvent;
 
@@ -43,12 +43,12 @@ public class CockroachDbEventStore implements EventStore {
     }
 
     @Override
-    public List<Event> eventsFor(EntityId entityId) {
+    public List<VersionedEvent> eventsFor(EntityId entityId) {
         return cockroachEvents.allEvents(entityId.asString());
     }
 
     @Override
-    public List<Event> eventsOfType(EventType eventType) {
+    public List<VersionedEvent> eventsOfType(EventType eventType) {
         return cockroachEvents.allEventsOfType(eventType.asString());
     }
 
@@ -57,10 +57,10 @@ public class CockroachDbEventStore implements EventStore {
         void insertIt(@Bind("entityId") String entityId, @Bind("eventType") String eventType, @Bind("data") String data);
 
         @SqlQuery("select * from hi.events where entityId = :entityId")
-        List<Event> allEvents(@Bind("entityId") String entityId);
+        List<VersionedEvent> allEvents(@Bind("entityId") String entityId);
 
         @SqlQuery("select * from hi.events where eventType = :eventType")
-        List<Event> allEventsOfType(@Bind("eventType") String eventType);
+        List<VersionedEvent> allEventsOfType(@Bind("eventType") String eventType);
 
         @SqlUpdate("drop database hi")
         void deleteAll();
@@ -72,15 +72,15 @@ public class CockroachDbEventStore implements EventStore {
         void createEventsTable();
     }
 
-    public class EventMapper implements ResultSetMapper<Event> {
+    public class EventMapper implements ResultSetMapper<VersionedEvent> {
         @Override
-        public Event map(int index, ResultSet r, StatementContext ctx) throws SQLException {
+        public VersionedEvent map(int index, ResultSet r, StatementContext ctx) throws SQLException {
             long version = r.getLong("version");
             String entityId = r.getString("entityId");
             String eventType = r.getString("eventType");
             String data = r.getString("data");
 
-            return Event.builder()
+            return VersionedEvent.builder()
                     .version(version)
                     .entityId(EntityId.of(entityId))
                     .eventType(EventType.of(eventType))

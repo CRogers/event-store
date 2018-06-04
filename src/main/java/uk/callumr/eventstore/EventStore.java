@@ -1,7 +1,7 @@
 package uk.callumr.eventstore;
 
 import uk.callumr.eventstore.core.EntityId;
-import uk.callumr.eventstore.core.Event;
+import uk.callumr.eventstore.core.VersionedEvent;
 import uk.callumr.eventstore.core.EventType;
 import uk.callumr.eventstore.core.NewEvent;
 
@@ -10,9 +10,9 @@ import java.util.List;
 public interface EventStore {
     void addEvent(EntityId entityId, NewEvent newEvent);
 
-    List<Event> eventsFor(EntityId entityId);
+    List<VersionedEvent> eventsFor(EntityId entityId);
 
-    List<Event> eventsOfType(EventType eventType);
+    List<VersionedEvent> eventsOfType(EventType eventType);
 
     void clear();
 }

@@ -4,7 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.callumr.eventstore.EventStore;
 import uk.callumr.eventstore.core.EntityId;
-import uk.callumr.eventstore.core.Event;
+import uk.callumr.eventstore.core.VersionedEvent;
 import uk.callumr.eventstore.core.EventType;
 import uk.callumr.eventstore.core.NewEvent;
 
@@ -36,7 +36,7 @@ public abstract class EventStoreShould {
     @Test
     public void return_an_event_given_one_was_inserted_for_a_given_entity_id() {
         eventStore.addEvent(JAMES, EVENT_DATA);
-        List<Event> events = eventStore.eventsFor(JAMES);
+        List<VersionedEvent> events = eventStore.eventsFor(JAMES);
 
         assertThat(events, contains(
                 matchingEvent(JAMES, EVENT_DATA)
@@ -48,7 +48,7 @@ public abstract class EventStoreShould {
         eventStore.addEvent(JAMES, EVENT_DATA);
         eventStore.addEvent(ALEX, OTHER_EVENT_DATA);
 
-        List<Event> events = eventStore.eventsFor(JAMES);
+        List<VersionedEvent> events = eventStore.eventsFor(JAMES);
 
         assertThat(events, contains(
                 matchingEvent(JAMES, EVENT_DATA)
@@ -60,7 +60,7 @@ public abstract class EventStoreShould {
         eventStore.addEvent(JAMES, EVENT_DATA);
         eventStore.addEvent(JAMES, OTHER_EVENT_DATA);
 
-        List<Event> events = eventStore.eventsFor(JAMES);
+        List<VersionedEvent> events = eventStore.eventsFor(JAMES);
 
         assertThat(events, contains(
                 matchingEvent(JAMES, EVENT_DATA),
@@ -73,7 +73,7 @@ public abstract class EventStoreShould {
         eventStore.addEvent(JAMES, EVENT_DATA);
         eventStore.addEvent(ALEX, OTHER_EVENT_TYPE.newEvent("hi"));
 
-        List<Event> events = eventStore.eventsOfType(EVENT_TYPE);
+        List<VersionedEvent> events = eventStore.eventsOfType(EVENT_TYPE);
 
         assertThat(events, contains(
                 matchingEvent(JAMES, EVENT_DATA)
