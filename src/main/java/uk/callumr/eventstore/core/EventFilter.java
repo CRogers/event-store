@@ -6,11 +6,16 @@ import org.derive4j.Visibility;
 
 @Data(value = @Derive(inClass = "EventFilterImpls", withVisibility = Visibility.Package))
 public abstract class EventFilter {
-    interface Cases<R> {
+    public interface Cases<R> {
         R allEventForEntity(EntityId entityId);
+        R allEventsOfType(EventType eventType);
     }
 
     public abstract <R> R match(Cases<R> cases);
+
+    public static EventFilterImpls.CaseOfMatchers.TotalMatcher_AllEventForEntity caseOf(EventFilter eventFilter) {
+        return EventFilterImpls.caseOf(eventFilter);
+    }
 
     @Override
     public abstract int hashCode();

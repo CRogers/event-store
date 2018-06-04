@@ -45,6 +45,11 @@ public class CockroachDbEventStore implements EventStore {
     }
 
     @Override
+    public List<VersionedEvent> eventsFor(EventFilters filters) {
+        return null;
+    }
+
+    @Override
     public List<VersionedEvent> eventsOfType(EventType eventType) {
         return cockroachEvents.allEventsOfType(eventType.asString());
     }

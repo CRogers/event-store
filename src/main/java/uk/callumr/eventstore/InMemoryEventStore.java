@@ -5,6 +5,8 @@ import uk.callumr.eventstore.core.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class InMemoryEventStore implements EventStore {
@@ -39,6 +41,24 @@ public class InMemoryEventStore implements EventStore {
         return events.stream()
                 .filter(event -> event.entityId().equals(entityId))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<VersionedEvent> eventsFor(EventFilters filters) {
+        Predicate<Event> eventPredicate = filters.stream().reduce(
+                event -> true,
+                (predicate, eventFilter) -> predicate.and(EventFilter.caseOf(eventFilter)
+                        .allEventForEntity(eventValueEqualTo(Event::entityId))
+                        .allEventsOfType(eventValueEqualTo(Event::eventType))),
+                Predicate::and);
+
+        return events.stream()
+                .filter(versionedEvent -> eventPredicate.test(versionedEvent.event()))
+                .collect(Collectors.toList());
+    }
+
+    private static <T> Function<T, Predicate<Event>> eventValueEqualTo(Function<Event, T> extractor) {
+        return value -> event -> value.equals(extractor.apply(event));
     }
 
     @Override

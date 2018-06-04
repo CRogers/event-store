@@ -3,10 +3,7 @@ package test.eventstore;
 import org.junit.Before;
 import org.junit.Test;
 import uk.callumr.eventstore.EventStore;
-import uk.callumr.eventstore.core.EntityId;
-import uk.callumr.eventstore.core.Event;
-import uk.callumr.eventstore.core.VersionedEvent;
-import uk.callumr.eventstore.core.EventType;
+import uk.callumr.eventstore.core.*;
 
 import java.util.List;
 
@@ -91,15 +88,21 @@ public abstract class EventStoreShould {
         ));
     }
 
-//    @Test
-//    public void update_() {
-//        eventStore.projectNewEvents(EventFilters.builder()
-//                .allEventForEntity(JAMES)
-//                .build(), events -> Stream.of())
-//
-//        eventStore.projectNewEvents(ImmutableSet.of(JAMES, ALEX), ImmutableSet.of(EVENT_TYPE, OTHER_EVENT_TYPE), events -> {
-//           return Stream.of()
-//        });
-//    }
+    @Test
+    public void get_events_with_filter_for_just_entity_id() {
+        Event jamesEvent = Event.of(JAMES, EVENT_TYPE, EVENT_DATA);
+        Event alexEvent = Event.of(ALEX, EVENT_TYPE, EVENT_DATA);
+
+        eventStore.addEvent(jamesEvent);
+        eventStore.addEvent(alexEvent);
+
+        List<VersionedEvent> events = eventStore.eventsFor(EventFilters.builder()
+                .allEventForEntity(JAMES)
+                .build());
+
+        assertThat(events, contains(
+                matchingEvent(jamesEvent)
+        ));
+    }
 
 }

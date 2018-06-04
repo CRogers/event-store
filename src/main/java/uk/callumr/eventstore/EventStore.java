@@ -1,9 +1,6 @@
 package uk.callumr.eventstore;
 
-import uk.callumr.eventstore.core.EntityId;
-import uk.callumr.eventstore.core.Event;
-import uk.callumr.eventstore.core.VersionedEvent;
-import uk.callumr.eventstore.core.EventType;
+import uk.callumr.eventstore.core.*;
 
 import java.util.List;
 
@@ -15,4 +12,6 @@ public interface EventStore {
     List<VersionedEvent> eventsOfType(EventType eventType);
 
     void clear();
+
+    List<VersionedEvent> eventsFor(EventFilters filters);
 }
