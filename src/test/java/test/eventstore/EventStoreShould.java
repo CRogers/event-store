@@ -10,6 +10,8 @@ import java.util.List;
 import static matchers.EventMatcher.matchingEvent;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static uk.callumr.eventstore.core.EventFilters.forEntity;
+import static uk.callumr.eventstore.core.EventFilters.ofType;
 
 public abstract class EventStoreShould {
     private static final EntityId JAMES = EntityId.of("james");
@@ -35,7 +37,7 @@ public abstract class EventStoreShould {
         Event event = EVENT_TYPE.newEvent(JAMES, EVENT_DATA);
         eventStore.addEvent(event);
 
-        List<VersionedEvent> events = eventStore.events(JAMES);
+        List<VersionedEvent> events = eventStore.events(forEntity(JAMES));
 
         assertThat(events, contains(
                 matchingEvent(event)
@@ -50,7 +52,7 @@ public abstract class EventStoreShould {
         eventStore.addEvent(jamesEvent1);
         eventStore.addEvent(jamesEvent2);
 
-        List<VersionedEvent> events = eventStore.events(JAMES);
+        List<VersionedEvent> events = eventStore.events(forEntity(JAMES));
 
         assertThat(events, contains(
                 matchingEvent(jamesEvent1),
@@ -66,9 +68,7 @@ public abstract class EventStoreShould {
         eventStore.addEvent(jamesEvent);
         eventStore.addEvent(alexEvent);
 
-        List<VersionedEvent> events = eventStore.events(EventFilters.builder()
-                .forEntity(JAMES)
-                .build());
+        List<VersionedEvent> events = eventStore.events(forEntity(JAMES));
 
         assertThat(events, contains(
                 matchingEvent(jamesEvent)
@@ -83,9 +83,7 @@ public abstract class EventStoreShould {
         eventStore.addEvent(someEvent);
         eventStore.addEvent(otherEvent);
 
-        List<VersionedEvent> events = eventStore.events(EventFilters.builder()
-                .ofType(EVENT_TYPE)
-                .build());
+        List<VersionedEvent> events = eventStore.events(ofType(EVENT_TYPE));
 
         assertThat(events, contains(
                 matchingEvent(someEvent)
