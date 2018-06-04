@@ -46,8 +46,8 @@ public enum EventMatcher {
         }
     }
 
-    public static Matcher<VersionedEvent> matchingEvent(EntityId entityId, Event event) {
-        return both(new EventEntityIdMatcher(equalTo(entityId)))
+    public static Matcher<VersionedEvent> matchingEvent(Event event) {
+        return both(new EventEntityIdMatcher(equalTo(event.entityId())))
                 .and(new EventTypeMatcher(equalTo(event.eventType())))
                 .and(new EventDataMatcher(equalTo(event.data())));
     }

@@ -26,8 +26,8 @@ public abstract class RecipeBook {
     public Recipe addRecipe(String recipeName) {
         EntityId recipeId = EntityId.random();
 
-        eventStore().addEvent(recipeId, RECIPE_CREATED.newEvent(recipeName));
-        eventStore().addEvent(id(), RECIPE_ADDED_TO_RECIPE_BOOK.newEvent(recipeId.asString()));
+        eventStore().addEvent(RECIPE_CREATED.newEvent(recipeId, recipeName));
+        eventStore().addEvent(RECIPE_ADDED_TO_RECIPE_BOOK.newEvent(id(), recipeId.asString()));
 
         return Recipe.builder()
                 .id(recipeId)

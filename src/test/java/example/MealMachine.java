@@ -18,7 +18,7 @@ public class MealMachine {
     public RecipeBook addRecipeBook(String recipeBookName) {
         EntityId recipeBookId = EntityId.random();
 
-        eventStore.addEvent(recipeBookId, RECIPE_BOOK_CREATED.newEvent(recipeBookName));
+        eventStore.addEvent(RECIPE_BOOK_CREATED.newEvent(recipeBookId, recipeBookName));
 
         return RecipeBook.builder()
                 .eventStore(eventStore)

@@ -8,7 +8,7 @@ import uk.callumr.eventstore.core.EventType;
 import java.util.List;
 
 public interface EventStore {
-    void addEvent(EntityId entityId, Event event);
+    void addEvent(Event event);
 
     List<VersionedEvent> eventsFor(EntityId entityId);
 

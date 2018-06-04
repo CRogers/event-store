@@ -25,10 +25,10 @@ public class InMemoryEventStore implements EventStore {
     }
 
     @Override
-    public void addEvent(EntityId entityId, Event event) {
+    public void addEvent(Event event) {
         events.add(VersionedEvent.builder()
                 .version(version.getAndIncrement())
-                .entityId(entityId)
+                .entityId(event.entityId())
                 .eventType(event.eventType())
                 .data(event.data())
                 .build()

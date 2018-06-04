@@ -38,8 +38,8 @@ public class CockroachDbEventStore implements EventStore {
     }
 
     @Override
-    public void addEvent(EntityId entityId, Event event) {
-        cockroachEvents.insertIt(entityId.asString(), event.eventType().asString(), event.data());
+    public void addEvent(Event event) {
+        cockroachEvents.insertIt(event.entityId().asString(), event.eventType().asString(), event.data());
     }
 
     @Override

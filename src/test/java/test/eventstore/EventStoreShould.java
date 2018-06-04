@@ -19,8 +19,8 @@ public abstract class EventStoreShould {
     private static final EntityId ALEX = EntityId.of("alex");
     private static final EventType EVENT_TYPE = EventType.of("eventType");
     private static final EventType OTHER_EVENT_TYPE = EventType.of("otherEventType");
-    private static final Event EVENT_DATA = EVENT_TYPE.newEvent("eventData");
-    private static final Event OTHER_EVENT_DATA = EVENT_TYPE.newEvent("other eventData");
+    private static final String EVENT_DATA = "eventData";
+    private static final String OTHER_EVENT_DATA = "other eventData";
 
     private final EventStore eventStore;
 
@@ -35,48 +35,59 @@ public abstract class EventStoreShould {
 
     @Test
     public void return_an_event_given_one_was_inserted_for_a_given_entity_id() {
-        eventStore.addEvent(JAMES, EVENT_DATA);
+        Event event = EVENT_TYPE.newEvent(JAMES, EVENT_DATA);
+        eventStore.addEvent(event);
+
         List<VersionedEvent> events = eventStore.eventsFor(JAMES);
 
         assertThat(events, contains(
-                matchingEvent(JAMES, EVENT_DATA)
+                matchingEvent(event)
         ));
     }
 
     @Test
     public void return_only_one_event_even_though_another_was_inserted_for_another_entity_id() {
-        eventStore.addEvent(JAMES, EVENT_DATA);
-        eventStore.addEvent(ALEX, OTHER_EVENT_DATA);
+        Event jamesEvent = EVENT_TYPE.newEvent(JAMES, EVENT_DATA);
+        Event alexEvent = EVENT_TYPE.newEvent(ALEX, OTHER_EVENT_DATA);
+
+        eventStore.addEvent(jamesEvent);
+        eventStore.addEvent(alexEvent);
 
         List<VersionedEvent> events = eventStore.eventsFor(JAMES);
 
         assertThat(events, contains(
-                matchingEvent(JAMES, EVENT_DATA)
+                matchingEvent(jamesEvent)
         ));
     }
 
     @Test
     public void return_two_events_in_insertion_order_when_inserted_for_the_same_entity() {
-        eventStore.addEvent(JAMES, EVENT_DATA);
-        eventStore.addEvent(JAMES, OTHER_EVENT_DATA);
+        Event jamesEvent1 = EVENT_TYPE.newEvent(JAMES, EVENT_DATA);
+        Event jamesEvent2 = EVENT_TYPE.newEvent(JAMES, OTHER_EVENT_DATA);
+
+        eventStore.addEvent(jamesEvent1);
+        eventStore.addEvent(jamesEvent2);
 
         List<VersionedEvent> events = eventStore.eventsFor(JAMES);
 
         assertThat(events, contains(
-                matchingEvent(JAMES, EVENT_DATA),
-                matchingEvent(JAMES, OTHER_EVENT_DATA)
+                matchingEvent(jamesEvent1),
+                matchingEvent(jamesEvent2)
         ));
     }
 
     @Test
     public void return_events_of_a_specific_type() {
-        eventStore.addEvent(JAMES, EVENT_DATA);
-        eventStore.addEvent(ALEX, OTHER_EVENT_TYPE.newEvent("hi"));
+        Event event = EVENT_TYPE.newEvent(JAMES, "yo");
+        Event otherEvent = OTHER_EVENT_TYPE.newEvent(JAMES, "hi");
+
+        eventStore.addEvent(event);
+        eventStore.addEvent(otherEvent);
 
         List<VersionedEvent> events = eventStore.eventsOfType(EVENT_TYPE);
 
         assertThat(events, contains(
-                matchingEvent(JAMES, EVENT_DATA)
+                matchingEvent(event)
         ));
     }
 
