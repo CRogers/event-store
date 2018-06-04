@@ -104,9 +104,19 @@ public class CockroachDbEventStore implements EventStore {
                 .findFirst()
                 .get();
 
-        return EventFilter.caseOf(eventFilter)
-                .forEntity(this::eventsFor)
-                .ofType(this::eventsOfType);
+        Condition condition = EventFilter.caseOf(eventFilter)
+                .forEntity(entityId -> ENTITY_ID.equal(entityId.asString()))
+                .ofType(eventType -> EVENT_TYPE.equal(eventType.asString()));
+
+        return jooq.transactionResult(configuration -> {
+            return DSL.using(configuration)
+                    .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
+                    .from(EVENTS)
+                    .where(condition)
+                    .stream()
+                    .map(this::toVersionedEvent)
+                    .collect(Collectors.toList());
+        });
     }
 
     @Override
