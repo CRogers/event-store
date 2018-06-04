@@ -96,7 +96,11 @@ public class CockroachDbEventStore implements EventStore {
 
     @Override
     public void addEvent(Event event) {
-        cockroachEvents.insertIt(event.entityId().asString(), event.eventType().asString(), event.data());
+        jooq.transaction(configuration -> DSL.using(configuration)
+                .insertInto(EVENTS)
+                .columns(ENTITY_ID, EVENT_TYPE, DATA)
+                .values(event.entityId().asString(), event.eventType().asString(), event.data())
+                .execute());
     }
 
     @Override
