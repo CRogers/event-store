@@ -107,14 +107,7 @@ public class CockroachDbEventStore implements EventStore {
                     .from(EVENTS)
                     .where(ENTITY_ID.equal(entityId.asString()))
                     .stream()
-                    .map(record -> VersionedEvent.builder()
-                            .version(record.component1())
-                            .event(BasicEvent.builder()
-                                    .entityId(EntityId.of(record.component2()))
-                                    .eventType(EventType.of(record.component3()))
-                                    .data(record.component4())
-                                    .build())
-                            .build())
+                    .map(this::toVersionedEvent)
                     .collect(Collectors.toList());
             });
     }
@@ -132,7 +125,26 @@ public class CockroachDbEventStore implements EventStore {
 
     @Override
     public List<VersionedEvent> eventsOfType(EventType eventType) {
-        return cockroachEvents.allEventsOfType(eventType.asString());
+        return jooq.transactionResult(configuration -> {
+            return DSL.using(configuration)
+                    .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
+                    .from(EVENTS)
+                    .where(EVENT_TYPE.equal(eventType.asString()))
+                    .stream()
+                    .map(this::toVersionedEvent)
+                    .collect(Collectors.toList());
+        });
+    }
+
+    private VersionedEvent toVersionedEvent(Record4<Long, String, String, String> record) {
+        return VersionedEvent.builder()
+                .version(record.component1())
+                .event(BasicEvent.builder()
+                        .entityId(EntityId.of(record.component2()))
+                        .eventType(EventType.of(record.component3()))
+                        .data(record.component4())
+                        .build())
+                .build();
     }
 
     public interface CockroachEvents {
