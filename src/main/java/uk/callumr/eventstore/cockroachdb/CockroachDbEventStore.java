@@ -3,6 +3,8 @@ package uk.callumr.eventstore.cockroachdb;
 import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
+import org.jooq.impl.DefaultDataType;
+import org.jooq.impl.SQLDataType;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
@@ -21,11 +23,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CockroachDbEventStore implements EventStore {
-    private static final Field<Long> VERSION = DSL.field("version", Long.class);
-    private static final Field<String> ENTITY_ID = DSL.field("entityId", String.class);
-    private static final Field<String> EVENT_TYPE = DSL.field("eventType", String.class);
-    private static final Field<String> DATA = DSL.field("data", String.class);
-    private static final Table<Record> EVENTS = DSL.table("events");
+    private static final DataType<Long> SERIAL = new DefaultDataType<>(SQLDialect.POSTGRES, Long.class, "serial").nullable(false);
+    private static final Field<Long> VERSION = DSL.field("version", SERIAL);
+    private static final Field<String> ENTITY_ID = DSL.field("entityId", SQLDataType.VARCHAR.nullable(false));
+    private static final Field<String> EVENT_TYPE = DSL.field("eventType", SQLDataType.VARCHAR.nullable(false));
+    private static final Field<String> DATA = DSL.field("data", SQLDataType.VARCHAR.nullable(false));
+    private static final Table<Record> EVENTS = DSL.table("hi.events");
 
     private final DBI dbi;
     private final CockroachEvents cockroachEvents;
@@ -69,7 +72,18 @@ public class CockroachDbEventStore implements EventStore {
             // ignore
         }
         this.cockroachEvents.createDatabase();
-        this.cockroachEvents.createEventsTable();
+        createEventsTable();
+    }
+
+    private void createEventsTable() {
+        jooq.transaction(configuration -> DSL.using(configuration)
+                .createTable(EVENTS)
+                .column(VERSION)
+                .column(ENTITY_ID)
+                .column(EVENT_TYPE)
+                .column(DATA)
+                .constraint(DSL.primaryKey(VERSION)).execute());
+
     }
 
     @Override
