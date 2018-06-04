@@ -19,6 +19,7 @@ repositories {
 // In this section you declare the dependencies for your production and test code
 dependencies {
     compile group: 'org.jdbi', name: 'jdbi', version: '2.78'
+    compile group: 'org.jooq', name: 'jooq', version: '3.10.7'
     compile group: 'org.postgresql', name: 'postgresql', version: '42.1.4'
     compile group: 'one.util', name: 'streamex', version: '0.6.6'
     compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'

@@ -17,6 +17,10 @@ import java.util.List;
 public class CockroachDbEventStore implements EventStore {
     private final CockroachEvents cockroachEvents;
 
+    static {
+        System.getProperties().setProperty("org.jooq.no-logo", "true");
+    }
+
     public CockroachDbEventStore(String jdbcUrl) {
         DBI dbi = new DBI(jdbcUrl, "root", "root");
         dbi.registerMapper(new EventMapper());
@@ -46,7 +50,13 @@ public class CockroachDbEventStore implements EventStore {
 
     @Override
     public List<VersionedEvent> eventsFor(EventFilters filters) {
-        return null;
+        EventFilter eventFilter = filters.stream()
+                .findFirst()
+                .get();
+
+        return EventFilter.caseOf(eventFilter)
+                .forEntity(this::eventsFor)
+                .ofType(this::eventsOfType);
     }
 
     @Override
