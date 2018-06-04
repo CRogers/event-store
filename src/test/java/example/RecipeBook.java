@@ -3,6 +3,7 @@ package example;
 import org.immutables.value.Value;
 import uk.callumr.eventstore.EventStore;
 import uk.callumr.eventstore.core.EntityId;
+import uk.callumr.eventstore.core.EventFilters;
 import uk.callumr.eventstore.core.VersionedEvent;
 import uk.callumr.eventstore.core.EventType;
 
@@ -36,10 +37,10 @@ public abstract class RecipeBook {
     }
 
     public Stream<Recipe> allRecipes() {
-        return eventStore().eventsOfType(RECIPE_ADDED_TO_RECIPE_BOOK).stream()
+        return eventStore().events(EventFilters.ofType(RECIPE_ADDED_TO_RECIPE_BOOK)).stream()
                 .map(event -> {
                     EntityId recipeId = EntityId.of(event.data());
-                    VersionedEvent recipeCreatedEvent = eventStore().events(recipeId).stream()
+                    VersionedEvent recipeCreatedEvent = eventStore().events(EventFilters.forEntity(recipeId)).stream()
                             .findFirst()
                             .orElseThrow(() -> new RuntimeException("never happen"));
                     return Recipe.builder()

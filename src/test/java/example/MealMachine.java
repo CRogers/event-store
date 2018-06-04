@@ -2,6 +2,7 @@ package example;
 
 import uk.callumr.eventstore.EventStore;
 import uk.callumr.eventstore.core.EntityId;
+import uk.callumr.eventstore.core.EventFilters;
 import uk.callumr.eventstore.core.EventType;
 
 import java.util.stream.Stream;
@@ -28,7 +29,7 @@ public class MealMachine {
     }
 
     public Stream<RecipeBook> allRecipeBooks() {
-        return eventStore.eventsOfType(RECIPE_BOOK_CREATED).stream()
+        return eventStore.events(EventFilters.ofType(RECIPE_BOOK_CREATED)).stream()
                 .map(event -> RecipeBook.builder()
                         .eventStore(eventStore)
                         .name(event.data())
