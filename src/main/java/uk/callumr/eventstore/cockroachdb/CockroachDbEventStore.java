@@ -11,6 +11,7 @@ import uk.callumr.eventstore.core.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class CockroachDbEventStore implements EventStore {
@@ -106,6 +107,12 @@ public class CockroachDbEventStore implements EventStore {
                     .stream()
                     .map(this::toVersionedEvent);
         });
+    }
+
+    @Override
+    public void reproject(EventFilters filters, Function<Stream<VersionedEvent>, Stream<Event>> projectionFunc) {
+        projectionFunc.apply(events(filters))
+                .forEach(this::addEvent);
     }
 
     private VersionedEvent toVersionedEvent(Record4<Long, String, String, String> record) {

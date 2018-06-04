@@ -49,6 +49,12 @@ public class InMemoryEventStore implements EventStore {
                 .filter(versionedEvent -> eventPredicate.test(versionedEvent.event()));
     }
 
+    @Override
+    public void reproject(EventFilters filters, Function<Stream<VersionedEvent>, Stream<Event>> projectionFunc) {
+        projectionFunc.apply(events(filters))
+                .forEach(this::addEvent);
+    }
+
     private static <T> Function<T, Predicate<Event>> eventValueEqualTo(Function<Event, T> extractor) {
         return value -> event -> value.equals(extractor.apply(event));
     }
