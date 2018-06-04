@@ -46,11 +46,11 @@ public class InMemoryEventStore implements EventStore {
     @Override
     public List<VersionedEvent> eventsFor(EventFilters filters) {
         Predicate<Event> eventPredicate = filters.stream().reduce(
-                event -> true,
-                (predicate, eventFilter) -> predicate.and(EventFilter.caseOf(eventFilter)
+                event -> false,
+                (predicate, eventFilter) -> predicate.or(EventFilter.caseOf(eventFilter)
                         .allEventForEntity(eventValueEqualTo(Event::entityId))
                         .allEventsOfType(eventValueEqualTo(Event::eventType))),
-                Predicate::and);
+                Predicate::or);
 
         return events.stream()
                 .filter(versionedEvent -> eventPredicate.test(versionedEvent.event()))
