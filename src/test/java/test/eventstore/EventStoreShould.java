@@ -105,4 +105,21 @@ public abstract class EventStoreShould {
         ));
     }
 
+    @Test
+    public void get_events_with_filter_for_just_event_type() {
+        Event someEvent = Event.of(JAMES, EVENT_TYPE, EVENT_DATA);
+        Event otherEvent = Event.of(JAMES, OTHER_EVENT_TYPE, EVENT_DATA);
+
+        eventStore.addEvent(someEvent);
+        eventStore.addEvent(otherEvent);
+
+        List<VersionedEvent> events = eventStore.eventsFor(EventFilters.builder()
+                .ofType(EVENT_TYPE)
+                .build());
+
+        assertThat(events, contains(
+                matchingEvent(someEvent)
+        ));
+    }
+
 }

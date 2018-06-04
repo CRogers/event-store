@@ -18,6 +18,11 @@ public abstract class EventFilters {
             addFilters(EventFilterImpls.forEntity(entityId));
             return this;
         }
+
+        public Builder ofType(EventType eventType) {
+            addFilters(EventFilterImpls.ofType(eventType));
+            return this;
+        }
     }
 
     public static Builder builder() {
