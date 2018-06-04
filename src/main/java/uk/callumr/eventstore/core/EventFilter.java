@@ -7,13 +7,13 @@ import org.derive4j.Visibility;
 @Data(value = @Derive(inClass = "EventFilterImpls", withVisibility = Visibility.Package))
 public abstract class EventFilter {
     public interface Cases<R> {
-        R allEventForEntity(EntityId entityId);
-        R allEventsOfType(EventType eventType);
+        R forEntity(EntityId entityId);
+        R ofType(EventType eventType);
     }
 
     public abstract <R> R match(Cases<R> cases);
 
-    public static EventFilterImpls.CaseOfMatchers.TotalMatcher_AllEventForEntity caseOf(EventFilter eventFilter) {
+    public static EventFilterImpls.CaseOfMatchers.TotalMatcher_ForEntity caseOf(EventFilter eventFilter) {
         return EventFilterImpls.caseOf(eventFilter);
     }
 

@@ -14,8 +14,8 @@ public abstract class EventFilters {
     }
 
     public static class Builder extends ImmutableEventFilters.Builder {
-        public Builder allEventForEntity(EntityId entityId) {
-            addFilters(EventFilterImpls.allEventForEntity(entityId));
+        public Builder forEntity(EntityId entityId) {
+            addFilters(EventFilterImpls.forEntity(entityId));
             return this;
         }
     }

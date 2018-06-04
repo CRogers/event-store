@@ -97,7 +97,7 @@ public abstract class EventStoreShould {
         eventStore.addEvent(alexEvent);
 
         List<VersionedEvent> events = eventStore.eventsFor(EventFilters.builder()
-                .allEventForEntity(JAMES)
+                .forEntity(JAMES)
                 .build());
 
         assertThat(events, contains(

@@ -48,8 +48,8 @@ public class InMemoryEventStore implements EventStore {
         Predicate<Event> eventPredicate = filters.stream().reduce(
                 event -> false,
                 (predicate, eventFilter) -> predicate.or(EventFilter.caseOf(eventFilter)
-                        .allEventForEntity(eventValueEqualTo(Event::entityId))
-                        .allEventsOfType(eventValueEqualTo(Event::eventType))),
+                        .forEntity(eventValueEqualTo(Event::entityId))
+                        .ofType(eventValueEqualTo(Event::eventType))),
                 Predicate::or);
 
         return events.stream()
