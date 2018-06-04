@@ -43,21 +43,6 @@ public abstract class EventStoreShould {
     }
 
     @Test
-    public void return_only_one_event_even_though_another_was_inserted_for_another_entity_id() {
-        Event jamesEvent = EVENT_TYPE.newEvent(JAMES, EVENT_DATA);
-        Event alexEvent = EVENT_TYPE.newEvent(ALEX, OTHER_EVENT_DATA);
-
-        eventStore.addEvent(jamesEvent);
-        eventStore.addEvent(alexEvent);
-
-        List<VersionedEvent> events = eventStore.eventsFor(JAMES);
-
-        assertThat(events, contains(
-                matchingEvent(jamesEvent)
-        ));
-    }
-
-    @Test
     public void return_two_events_in_insertion_order_when_inserted_for_the_same_entity() {
         Event jamesEvent1 = EVENT_TYPE.newEvent(JAMES, EVENT_DATA);
         Event jamesEvent2 = EVENT_TYPE.newEvent(JAMES, OTHER_EVENT_DATA);
@@ -70,21 +55,6 @@ public abstract class EventStoreShould {
         assertThat(events, contains(
                 matchingEvent(jamesEvent1),
                 matchingEvent(jamesEvent2)
-        ));
-    }
-
-    @Test
-    public void return_events_of_a_specific_type() {
-        Event event = EVENT_TYPE.newEvent(JAMES, "yo");
-        Event otherEvent = OTHER_EVENT_TYPE.newEvent(JAMES, "hi");
-
-        eventStore.addEvent(event);
-        eventStore.addEvent(otherEvent);
-
-        List<VersionedEvent> events = eventStore.eventsOfType(EVENT_TYPE);
-
-        assertThat(events, contains(
-                matchingEvent(event)
         ));
     }
 
