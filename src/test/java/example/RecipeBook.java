@@ -39,7 +39,7 @@ public abstract class RecipeBook {
         return eventStore().eventsOfType(RECIPE_ADDED_TO_RECIPE_BOOK).stream()
                 .map(event -> {
                     EntityId recipeId = EntityId.of(event.data());
-                    VersionedEvent recipeCreatedEvent = eventStore().eventsFor(recipeId).stream()
+                    VersionedEvent recipeCreatedEvent = eventStore().events(recipeId).stream()
                             .findFirst()
                             .orElseThrow(() -> new RuntimeException("never happen"));
                     return Recipe.builder()

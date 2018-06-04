@@ -35,7 +35,7 @@ public abstract class EventStoreShould {
         Event event = EVENT_TYPE.newEvent(JAMES, EVENT_DATA);
         eventStore.addEvent(event);
 
-        List<VersionedEvent> events = eventStore.eventsFor(JAMES);
+        List<VersionedEvent> events = eventStore.events(JAMES);
 
         assertThat(events, contains(
                 matchingEvent(event)
@@ -50,7 +50,7 @@ public abstract class EventStoreShould {
         eventStore.addEvent(jamesEvent1);
         eventStore.addEvent(jamesEvent2);
 
-        List<VersionedEvent> events = eventStore.eventsFor(JAMES);
+        List<VersionedEvent> events = eventStore.events(JAMES);
 
         assertThat(events, contains(
                 matchingEvent(jamesEvent1),
@@ -66,7 +66,7 @@ public abstract class EventStoreShould {
         eventStore.addEvent(jamesEvent);
         eventStore.addEvent(alexEvent);
 
-        List<VersionedEvent> events = eventStore.eventsFor(EventFilters.builder()
+        List<VersionedEvent> events = eventStore.events(EventFilters.builder()
                 .forEntity(JAMES)
                 .build());
 
@@ -83,7 +83,7 @@ public abstract class EventStoreShould {
         eventStore.addEvent(someEvent);
         eventStore.addEvent(otherEvent);
 
-        List<VersionedEvent> events = eventStore.eventsFor(EventFilters.builder()
+        List<VersionedEvent> events = eventStore.events(EventFilters.builder()
                 .ofType(EVENT_TYPE)
                 .build());
 

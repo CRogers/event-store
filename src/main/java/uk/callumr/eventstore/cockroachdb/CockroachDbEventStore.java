@@ -86,7 +86,7 @@ public class CockroachDbEventStore implements EventStore {
     }
 
     @Override
-    public List<VersionedEvent> eventsFor(EventFilters filters) {
+    public List<VersionedEvent> events(EventFilters filters) {
         EventFilter eventFilter = filters.stream()
                 .findFirst()
                 .get();
