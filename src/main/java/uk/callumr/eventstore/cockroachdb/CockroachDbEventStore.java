@@ -12,6 +12,8 @@ import uk.callumr.eventstore.core.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -102,17 +104,24 @@ public class CockroachDbEventStore implements EventStore {
         jooq.transaction(configuration -> {
             DSLContext dsl = DSL.using(configuration);
 
+            AtomicReference<Optional<Long>> lastVersion = new AtomicReference<>(Optional.empty());
+
             Stream<VersionedEvent> events = logSQL(dsl
                     .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
                     .from(EVENTS)
                     .where(condition))
                     .stream()
-                    .map(this::toVersionedEvent);
+                    .map(this::toVersionedEvent)
+                    .peek(event -> lastVersion.set(Optional.of(event.version())));
 
             Stream<Event> apply = projectionFunc.apply(events);
 
+            Condition versionSearch = lastVersion.get()
+                    .map(VERSION::greaterThan)
+                    .orElse(DSL.trueCondition());
+
             Event event = apply.findFirst().get();
-            logSQL(dsl.insertInto(EVENTS)
+            int addedRows = logSQL(dsl.insertInto(EVENTS)
                     .columns(ENTITY_ID, EVENT_TYPE, DATA)
                     .select(dsl
                             .select(ENTITY_ID, EVENT_TYPE, DATA)
@@ -122,8 +131,10 @@ public class CockroachDbEventStore implements EventStore {
                             .whereNotExists(dsl
                                     .selectOne()
                                     .from(EVENTS)
-                                    .where(VERSION.greaterThan(1234L)))))
+                                    .where(versionSearch))))
                     .execute();
+
+            System.out.println("addedRows = " + addedRows);
         });
     }
 
