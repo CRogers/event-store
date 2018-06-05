@@ -24,9 +24,6 @@ public class CockroachDbEventStore implements EventStore {
     private static final Field<String> DATA = DSL.field("data", SQLDataType.VARCHAR.nullable(false));
     private static final Table<Record> EVENTS = DSL.table("hi.events");
 
-    private static final Field<Boolean> MEANINGLESS_VALUE = DSL.field("meaninglessValue", SQLDataType.BOOLEAN.nullable(false));
-    private static final Table<Record> ENTITY_EVENT_LOCKS = DSL.table("hi.entity_event_locks");
-
     private final DSLContext jooq;
 
     static {
@@ -60,7 +57,6 @@ public class CockroachDbEventStore implements EventStore {
         deleteAll();
         createDatabase();
         createEventsTable();
-        createEntityEventsLockTable();
     }
 
     private void deleteAll() {
@@ -82,66 +78,29 @@ public class CockroachDbEventStore implements EventStore {
 
     }
 
-    private void createEntityEventsLockTable() {
-        jooq.transaction(configuration -> DSL.using(configuration)
-                .createTable(ENTITY_EVENT_LOCKS)
-                .column(ENTITY_ID)
-                .column(MEANINGLESS_VALUE)
-                .constraint(DSL.primaryKey(ENTITY_ID))
-                .constraint(DSL.unique(ENTITY_ID))
-                .execute());
-    }
-
     @Override
     public void addEvent(Event event) {
-        jooq.transaction(configuration -> {
-            DSLContext dsl = DSL.using(configuration);
-
-            updateEntityEventLocks(dsl, event.entityId());
-
-            insertEvents(dsl, Stream.of(event));
-        });
+        jooq.transaction(configuration -> insertEvents(DSL.using(configuration), Stream.of(event)));
     }
 
     @Override
     public Stream<VersionedEvent> events(EventFilters filters) {
         Condition condition = eventFiltersToCondition(filters);
 
-        return jooq.transactionResult(configuration -> {
-            return logSQL(DSL.using(configuration)
-                    .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
-                    .from(EVENTS)
-                    .where(condition))
-                    .stream()
-                    .map(this::toVersionedEvent);
-        });
+        return jooq.transactionResult(configuration -> logSQL(DSL.using(configuration)
+                .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
+                .from(EVENTS)
+                .where(condition))
+                .stream()
+                .map(this::toVersionedEvent));
     }
 
     @Override
     public void reproject(EventFilters filters, Function<Stream<VersionedEvent>, Stream<Event>> projectionFunc) {
         Condition condition = eventFiltersToCondition(filters);
 
-        EventFilter eventFilter = filters.stream()
-                .findFirst()
-                .get();
-
-        EntityId entityId = EventFilter.caseOf(eventFilter)
-                .forEntity(eid -> eid)
-                .ofType(eventType -> {
-                    throw new RuntimeException();
-                })
-                .all(() -> {
-                    throw new RuntimeException();
-                });
-
         jooq.transaction(configuration -> {
             DSLContext dsl = DSL.using(configuration);
-
-//            logSQL(dsl
-//                    .select(MEANINGLESS_VALUE)
-//                    .from(ENTITY_EVENT_LOCKS)
-//                    .where(ENTITY_ID.equal(entityId.asString())))
-//                    .execute();
 
             Stream<VersionedEvent> events = logSQL(dsl
                     .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
@@ -152,20 +111,7 @@ public class CockroachDbEventStore implements EventStore {
 
             Stream<Event> apply = projectionFunc.apply(events);
             insertEvents(dsl, apply);
-
-            updateEntityEventLocks(dsl, entityId);
         });
-    }
-
-    private void updateEntityEventLocks(DSLContext dsl, EntityId entityId) {
-        logSQL(dsl
-                .insertInto(ENTITY_EVENT_LOCKS)
-                .columns(ENTITY_ID, MEANINGLESS_VALUE)
-                .values(entityId.asString(), true)
-                .onConflict(ENTITY_ID)
-                .doUpdate()
-                .set(MEANINGLESS_VALUE, true))
-                .execute();
     }
 
     private void insertEvents(DSLContext dsl, Stream<Event> events) {
