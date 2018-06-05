@@ -59,6 +59,7 @@ public class CockroachDbEventStore implements EventStore {
         deleteAll();
         createDatabase();
         createEventsTable();
+        createIndex();
     }
 
     private void deleteAll() {
@@ -78,6 +79,13 @@ public class CockroachDbEventStore implements EventStore {
                 .column(DATA)
                 .constraint(DSL.primaryKey(VERSION)).execute());
 
+    }
+
+    private void createIndex() {
+        jooq.transaction(configuration -> logSQL(DSL.using(configuration)
+                .createIndexIfNotExists("entityId")
+                .on(EVENTS, ENTITY_ID, VERSION))
+                .execute());
     }
 
     @Override
@@ -101,39 +109,45 @@ public class CockroachDbEventStore implements EventStore {
     public void reproject(EventFilters filters, Function<Stream<VersionedEvent>, Stream<Event>> projectionFunc) {
         Condition condition = eventFiltersToCondition(filters);
 
-        jooq.transaction(configuration -> {
+        Stream<VersionedEvent> events = jooq.transactionResult(configuration -> {
             DSLContext dsl = DSL.using(configuration);
 
-            AtomicReference<Optional<Long>> lastVersion = new AtomicReference<>(Optional.empty());
-
-            Stream<VersionedEvent> events = logSQL(dsl
+            return logSQL(dsl
                     .select(VERSION, ENTITY_ID, EVENT_TYPE, DATA)
                     .from(EVENTS)
                     .where(condition))
                     .stream()
-                    .map(this::toVersionedEvent)
-                    .peek(event -> lastVersion.set(Optional.of(event.version())));
+                    .map(this::toVersionedEvent);
+        });
 
-            Stream<Event> apply = projectionFunc.apply(events);
+        AtomicReference<Optional<Long>> lastVersion = new AtomicReference<>(Optional.empty());
 
-            Condition versionSearch = lastVersion.get()
-                    .map(VERSION::greaterThan)
-                    .orElse(DSL.trueCondition());
+        Stream<Event> apply = projectionFunc.apply(events
+                .peek(event -> lastVersion.set(Optional.of(event.version()))));
 
-            Event event = apply.findFirst().get();
-            int addedRows = logSQL(dsl.insertInto(EVENTS)
+        Condition versionSearch = lastVersion.get()
+                .map(VERSION::greaterThan)
+                .orElse(DSL.trueCondition());
+
+        Event event = apply.findFirst().get();
+        Table<Record3<String, String, String>> values = DSL.values(
+                DSL.row(event.entityId().asString(), event.eventType().asString(), event.data()));
+
+        int addedRows = jooq.transactionResult(configuration -> {
+            DSLContext dsl = DSL.using(configuration);
+
+            return logSQL(dsl.insertInto(EVENTS)
                     .columns(ENTITY_ID, EVENT_TYPE, DATA)
                     .select(this.<Record3<String, String, String>>selectStar(dsl)
-                            .from(DSL.values(
-                                    DSL.row(event.entityId().asString(), event.eventType().asString(), event.data())))
+                            .from(values)
                             .whereNotExists(dsl
                                     .selectOne()
                                     .from(EVENTS)
-                                    .where(versionSearch))))
+                                    .where(versionSearch.and(condition)))))
                     .execute();
-
-            System.out.println("addedRows = " + addedRows);
         });
+
+        System.out.println("addedRows = " + addedRows);
     }
 
     private <T extends Record> SelectSelectStep<T> selectStar(DSLContext dsl) {
