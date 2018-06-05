@@ -110,7 +110,20 @@ public class CockroachDbEventStore implements EventStore {
                     .map(this::toVersionedEvent);
 
             Stream<Event> apply = projectionFunc.apply(events);
-            insertEvents(dsl, apply);
+
+            Event event = apply.findFirst().get();
+            logSQL(dsl.insertInto(EVENTS)
+                    .columns(ENTITY_ID, EVENT_TYPE, DATA)
+                    .select(dsl
+                            .select(ENTITY_ID, EVENT_TYPE, DATA)
+                            .from(DSL.values(
+                                    DSL.row(event.entityId().asString(), event.eventType().asString(), event.data()))
+                                    .as("values", ENTITY_ID.getName(), EVENT_TYPE.getName(), DATA.getName()))
+                            .whereNotExists(dsl
+                                    .selectOne()
+                                    .from(EVENTS)
+                                    .where(VERSION.greaterThan(1234L)))))
+                    .execute();
         });
     }
 
