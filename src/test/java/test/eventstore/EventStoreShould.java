@@ -133,18 +133,19 @@ public abstract class EventStoreShould {
 
         AtomicBoolean runOnce = new AtomicBoolean(false);
 
-        eventStore.reproject(all(), events -> {
+        eventStore.reproject(forEntity(JAMES), events -> {
+            long count = events.count();
             if (!runOnce.get()) {
                 eventStore.addEvent(event2);
                 runOnce.set(true);
             }
-            return Stream.of(Event.of(ALEX, EVENT_TYPE, Long.toString(events.count())));
+            return Stream.of(Event.of(JAMES, EVENT_TYPE, Long.toString(count)));
         });
 
-        assertThatSteamContainsEvents(eventStore.events(all()),
+        assertThatSteamContainsEvents(eventStore.events(forEntity(JAMES)),
                 event1,
                 event2,
-                Event.of(ALEX, EVENT_TYPE, "2"));
+                Event.of(JAMES, EVENT_TYPE, "2"));
     }
 
     private static void assertThatSteamContainsEvents(Stream<VersionedEvent> eventStream, Event... expectedEvents) {
