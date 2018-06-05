@@ -62,7 +62,7 @@ public class CockroachDbEventStore implements EventStore {
     }
 
     private void deleteAll() {
-        jooq.transaction(configuration -> DSL.using(configuration).query("drop database hi").execute());
+        jooq.transaction(configuration -> DSL.using(configuration).query("drop database if exists hi").execute());
     }
 
     private void createDatabase() {
