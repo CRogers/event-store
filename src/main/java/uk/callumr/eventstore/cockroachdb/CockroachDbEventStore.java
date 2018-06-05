@@ -123,11 +123,9 @@ public class CockroachDbEventStore implements EventStore {
             Event event = apply.findFirst().get();
             int addedRows = logSQL(dsl.insertInto(EVENTS)
                     .columns(ENTITY_ID, EVENT_TYPE, DATA)
-                    .select(dsl
-                            .select(ENTITY_ID, EVENT_TYPE, DATA)
+                    .select(this.<Record3<String, String, String>>selectStar(dsl)
                             .from(DSL.values(
-                                    DSL.row(event.entityId().asString(), event.eventType().asString(), event.data()))
-                                    .as("values", ENTITY_ID.getName(), EVENT_TYPE.getName(), DATA.getName()))
+                                    DSL.row(event.entityId().asString(), event.eventType().asString(), event.data())))
                             .whereNotExists(dsl
                                     .selectOne()
                                     .from(EVENTS)
@@ -136,6 +134,11 @@ public class CockroachDbEventStore implements EventStore {
 
             System.out.println("addedRows = " + addedRows);
         });
+    }
+
+    private <T extends Record> SelectSelectStep<T> selectStar(DSLContext dsl) {
+        return (SelectSelectStep<T>) dsl
+                        .select(DSL.field("*"));
     }
 
     private void insertEvents(DSLContext dsl, Stream<Event> events) {
